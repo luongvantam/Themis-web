@@ -127,4 +127,30 @@ describe('Scoreboard Calculation & Multi-Format Export', () => {
     expect(html).toContain('<th>Thí sinh</th>');
     expect(html).toContain('>An</td>');
   });
+
+  it('should NOT show scores by default or when submissions are pending/cleared', () => {
+    const pendingSubs: Submission[] = [
+      {
+        id: 'p-sub-1',
+        contestId: 'c-test',
+        problemId: 'p1',
+        problemCode: 'BAI1',
+        contestantName: 'Cuong',
+        languageId: 54,
+        sourceCode: '',
+        status: 'PENDING',
+        totalScore: 0,
+        maxScore: 10,
+        testResults: [],
+        createdAt: 1000,
+      },
+    ];
+
+    const rows = calculateScoreboard(mockContest, pendingSubs);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].contestantName).toBe('Cuong');
+    expect(rows[0].hasAnyGraded).toBe(false);
+    expect(rows[0].problemScores['BAI1']).toBeUndefined();
+    expect(rows[0].problemGraded['BAI1']).toBe(false);
+  });
 });

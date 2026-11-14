@@ -52,7 +52,7 @@ export const ThemisAboutModal: React.FC<ThemisAboutModalProps> = ({ isOpen, onCl
             </div>
             <div className="pt-2 border-t border-[#D0D0D0]">
               <span className="text-[#003366] block font-bold text-[11px] uppercase">Người viết lại cho bản Web:</span>
-              <p className="text-black font-semibold mt-0.5">Lương Văn Tâm (Học sinh)</p>
+              <p className="text-black font-semibold mt-0.5">Lương Văn Tâm (THPT Trần Phú - Quảng Ninh)</p>
               <p className="text-slate-600 text-[10px] mt-0.5">
                 Trang web: <a href="https://themis-tranphuquangninh.pages.dev/" target="_blank" rel="noreferrer" className="text-blue-700 underline font-semibold">https://themis-tranphuquangninh.pages.dev/</a>
               </p>

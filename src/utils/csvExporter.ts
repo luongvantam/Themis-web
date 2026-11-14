@@ -3,8 +3,10 @@ import { Contest, Submission } from '../types';
 export interface ScoreboardRow {
   rank: number;
   contestantName: string;
-  problemScores: Record<string, number>; // problemCode -> max earned score
+  problemScores: Record<string, number | undefined>; // problemCode -> max earned score, or undefined if not graded
+  problemGraded: Record<string, boolean>; // problemCode -> whether this problem was actually graded
   totalScore: number;
+  hasAnyGraded: boolean; // whether contestant has at least one graded score
   submissionCount: number;
   lastSubmitTime: number;
 }
@@ -19,19 +21,27 @@ export function calculateScoreboard(
 ): ScoreboardRow[] {
   const contestantMap: Map<
     string,
-    { scores: Record<string, number>; count: number; lastTime: number }
+    {
+      scores: Record<string, number | undefined>;
+      graded: Record<string, boolean>;
+      count: number;
+      lastTime: number;
+    }
   > = new Map();
 
   for (const sub of submissions) {
     if (sub.contestId !== contest.id) continue;
 
     if (!contestantMap.has(sub.contestantName)) {
-      const initialScores: Record<string, number> = {};
+      const initialScores: Record<string, number | undefined> = {};
+      const initialGraded: Record<string, boolean> = {};
       contest.problems.forEach((p) => {
-        initialScores[p.code] = 0;
+        initialScores[p.code] = undefined;
+        initialGraded[p.code] = false;
       });
       contestantMap.set(sub.contestantName, {
         scores: initialScores,
+        graded: initialGraded,
         count: 0,
         lastTime: 0,
       });
@@ -43,22 +53,36 @@ export function calculateScoreboard(
       entry.lastTime = sub.createdAt;
     }
 
-    // Keep highest score per problem
-    const prevScore = entry.scores[sub.problemCode] ?? 0;
-    if (sub.totalScore > prevScore) {
-      entry.scores[sub.problemCode] = sub.totalScore;
+    // A submission is graded if its status is DONE or it has test results
+    const isGraded = sub.status === 'DONE' || (sub.testResults && sub.testResults.length > 0);
+    if (isGraded) {
+      entry.graded[sub.problemCode] = true;
+      const prevScore = entry.scores[sub.problemCode];
+      if (prevScore === undefined || sub.totalScore > prevScore) {
+        entry.scores[sub.problemCode] = sub.totalScore;
+      }
     }
   }
 
   const rows: ScoreboardRow[] = [];
 
   for (const [name, data] of contestantMap.entries()) {
-    const totalScore = Object.values(data.scores).reduce((a, b) => a + b, 0);
+    let hasGradedAny = false;
+    let totalScore = 0;
+    for (const p of contest.problems) {
+      const pScore = data.scores[p.code];
+      if (data.graded[p.code] && pScore !== undefined) {
+        hasGradedAny = true;
+        totalScore += pScore;
+      }
+    }
     rows.push({
       rank: 1,
       contestantName: name,
       problemScores: data.scores,
+      problemGraded: data.graded,
       totalScore: Number(totalScore.toFixed(2)),
+      hasAnyGraded: hasGradedAny,
       submissionCount: data.count,
       lastSubmitTime: data.lastTime,
     });
@@ -66,6 +90,9 @@ export function calculateScoreboard(
 
   // Sort descending by total score, then by earliest last submit time
   rows.sort((a, b) => {
+    if (a.hasAnyGraded !== b.hasAnyGraded) {
+      return a.hasAnyGraded ? -1 : 1;
+    }
     if (b.totalScore !== a.totalScore) {
       return b.totalScore - a.totalScore;
     }

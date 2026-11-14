@@ -281,6 +281,7 @@ export const ThemisStudentManagerModal: React.FC<ThemisStudentManagerModalProps>
                         {/* Problem scores */}
                         {contest.problems.map((prob) => {
                           const score = row.problemScores[prob.code];
+                          const isGraded = row.problemGraded?.[prob.code] ?? (score !== undefined);
                           const hasSub = submissions.some(
                             (s) =>
                               s.contestantName.toLowerCase() === row.contestantName.toLowerCase() &&
@@ -291,7 +292,7 @@ export const ThemisStudentManagerModal: React.FC<ThemisStudentManagerModalProps>
                               key={prob.id}
                               className="py-1 px-2 text-center font-mono text-[11px] border-r border-[#EAEAEA]"
                             >
-                              {!hasSub ? (
+                              {!hasSub || !isGraded || score === undefined ? (
                                 <span className="text-slate-300">-</span>
                               ) : score === prob.points ? (
                                 <span className="text-[#008000] font-bold">{score.toFixed(1)}</span>
@@ -306,7 +307,7 @@ export const ThemisStudentManagerModal: React.FC<ThemisStudentManagerModalProps>
 
                         {/* Total Score */}
                         <td className="py-1 px-3 text-right font-mono font-bold text-[12px] text-[#003366] border-r border-[#EAEAEA]">
-                          {row.totalScore.toFixed(2)}
+                          {row.hasAnyGraded ? row.totalScore.toFixed(2) : '-'}
                         </td>
 
                         {/* Actions */}

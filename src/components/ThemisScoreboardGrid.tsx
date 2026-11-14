@@ -304,10 +304,10 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                       const isProbChecked = !selectedProblemCodes || selectedProblemCodes.has(prob.code.toUpperCase());
                       const willBeJudged = isStudentChecked && isProbChecked;
                       const score = row.problemScores[prob.code];
+                      const isGraded = row.problemGraded?.[prob.code] ?? (score !== undefined && score !== null);
                       const hasSubmitted = submissions.some(
                         (s) => s.contestantName === row.contestantName && s.problemCode === prob.code
                       );
-                      const isGraded = hasSubmitted && score !== undefined && score !== null;
 
                       return (
                         <td
@@ -320,8 +320,10 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                           title={
                             !willBeJudged
                               ? `Bài này sẽ BỎ QUA khi bấm Chấm bài (do ${!isStudentChecked ? 'thí sinh' : 'bài toán'} đang tắt tick)`
+                              : isGraded && score !== undefined
+                              ? `Điểm: ${score.toFixed(1)} / ${prob.points}. Nhấn để xem chi tiết`
                               : hasSubmitted
-                              ? `Nhấn để xem / sửa bài làm ${prob.code} của ${row.contestantName}`
+                              ? `Chưa chấm bài ${prob.code} của ${row.contestantName}. Nhấn để xem file`
                               : `Chưa nộp bài ${prob.code}. Nhấn để xem chẩn đoán file!`
                           }
                           className={`py-1 px-2 text-center border-r border-b border-[#E0E0E0] font-mono text-[11px] cursor-pointer hover:underline ${
@@ -329,8 +331,8 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                               ? 'bg-[#F3F4F6] text-slate-400'
                               : !hasSubmitted
                               ? 'text-slate-400 hover:text-slate-700 bg-slate-50'
-                              : !isGraded
-                              ? 'text-amber-600 font-bold'
+                              : !isGraded || score === undefined
+                              ? 'text-slate-400'
                               : score === prob.points
                               ? 'text-[#008000] font-bold'
                               : score > 0
@@ -338,14 +340,14 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                               : 'text-[#CC0000] font-bold'
                           }`}
                         >
-                          {isGraded ? score.toFixed(1) : hasSubmitted ? '?' : '-'}
+                          {isGraded && score !== undefined ? score.toFixed(1) : ''}
                         </td>
                       );
                     })}
 
                     {/* Total Score */}
                     <td className="py-1 px-3 text-right border-r border-b border-[#E0E0E0] font-mono font-bold text-[12px] text-[#003366]">
-                      {row.totalScore.toFixed(2)}
+                      {row.hasAnyGraded ? row.totalScore.toFixed(2) : ''}
                     </td>
                   </tr>
                 );

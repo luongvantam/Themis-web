@@ -130,26 +130,31 @@ export const ScoreboardTable: React.FC<ScoreboardTableProps> = ({ contest, submi
                     {row.contestantName}
                   </td>
                   {contest.problems.map((p) => {
-                    const score = row.problemScores[p.code] ?? 0;
-                    const isFull = score === p.points && p.points > 0;
+                    const score = row.problemScores[p.code];
+                    const isGraded = row.problemGraded?.[p.code] ?? (score !== undefined);
+                    const isFull = score !== undefined && score === p.points && p.points > 0;
                     return (
                       <td key={p.id} className="py-3 px-4 text-center">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded font-bold text-[11px] ${
-                            isFull
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : score > 0
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              : 'text-slate-600'
-                          }`}
-                        >
-                          {score.toFixed(1)}
-                        </span>
+                        {isGraded && score !== undefined ? (
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded font-bold text-[11px] ${
+                              isFull
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : score > 0
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'text-slate-600'
+                            }`}
+                          >
+                            {score.toFixed(1)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">-</span>
+                        )}
                       </td>
                     );
                   })}
                   <td className="py-3 px-4 text-right text-emerald-400 font-bold text-sm">
-                    {row.totalScore.toFixed(2)}
+                    {row.hasAnyGraded ? row.totalScore.toFixed(2) : '-'}
                   </td>
                   <td className="py-3 px-4 text-center text-slate-400">
                     {row.submissionCount}
