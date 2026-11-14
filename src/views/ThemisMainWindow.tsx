@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Table2, BookOpen } from 'lucide-react';
-import { Contest, Submission } from '../types';
+import { Contest, Problem, Submission } from '../types';
 import { useColorMode } from '../utils/useColorMode';
 import { ThemisWindowTitleBar } from '../components/ThemisWindowTitleBar';
 import { ThemisMenuBar } from '../components/ThemisMenuBar';
@@ -15,6 +15,7 @@ import { ThemisStudentManagerModal } from '../components/ThemisStudentManagerMod
 import { ThemisSelectiveJudgeModal } from '../components/ThemisSelectiveJudgeModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { AdminProblemManager } from '../components/AdminProblemManager';
+import { ThemisProblemDetailModal } from '../components/ThemisProblemDetailModal';
 import { BatchJudgeModal } from '../components/BatchJudgeModal';
 import { exportContestToJSON, importContestFromJSON, exportContestToContestZip } from '../utils/themisPackage';
 import {
@@ -97,7 +98,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showStudentManagerModal, setShowStudentManagerModal] = useState(false);
   const [showSelectiveModal, setShowSelectiveModal] = useState(false);
-  const [selectedProblemForEdit, setSelectedProblemForEdit] = useState<string | null>(null);
+  const [selectedProblemForDetail, setSelectedProblemForDetail] = useState<Problem | null>(null);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState<'scoreboard' | 'docs'>('scoreboard');
   const { colorMode, setColorMode } = useColorMode();
@@ -1314,8 +1315,12 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
               setShowStudentManagerModal(true);
             }}
             onOpenProblemConfig={(code) => {
-              setSelectedProblemForEdit(code || null);
-              setShowTasksModal(true);
+              const p = activeContest?.problems.find(
+                (prob) => prob.code.toUpperCase() === code?.toUpperCase()
+              );
+              if (p) {
+                setSelectedProblemForDetail(p);
+              }
             }}
           />
         </div>
@@ -1364,17 +1369,14 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       />
 
       {/* Modals & Dialogs */}
-      {/* Tasks Management Dialog */}
+      {/* Tasks Management Dialog (Danh sách các đề bài) */}
       {showTasksModal && activeContest && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white/95 dark:bg-[#1E1E22]/95 backdrop-blur-2xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden text-xs font-sans transition-colors">
-            <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none">
-              <span className="font-semibold text-sm text-neutral-900 dark:text-white">Themis - Cấu hình danh sách bài thi & Test Cases</span>
+            <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none shrink-0">
+              <span className="font-semibold text-sm text-neutral-900 dark:text-white">Themis - Danh sách các bài thi & Test Cases</span>
               <button
-                onClick={() => {
-                  setShowTasksModal(false);
-                  setSelectedProblemForEdit(null);
-                }}
+                onClick={() => setShowTasksModal(false)}
                 className="w-7 h-7 rounded-full bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
                 ✕
@@ -1383,16 +1385,36 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
             <div className="p-4 overflow-y-auto flex-1 bg-[#F5F5F7] dark:bg-[#161618]">
               <AdminProblemManager
                 contest={activeContest}
-                initialProblemCode={selectedProblemForEdit}
                 onUpdateContest={(c) => {
                   onUpdateContest(c);
                   addLog(`Đã cập nhật danh sách bài thi cho kỳ thi "${c.title}"`, 'info');
+                }}
+                onEditProblem={(prob) => {
+                  setShowTasksModal(false);
+                  setSelectedProblemForDetail(prob);
                 }}
               />
             </div>
           </div>
         </div>
       )}
+
+      {/* Single Problem Detail & Test Case Editor Modal (Khung đề bài riêng biệt) */}
+      <ThemisProblemDetailModal
+        isOpen={selectedProblemForDetail !== null}
+        problem={selectedProblemForDetail}
+        onClose={() => setSelectedProblemForDetail(null)}
+        onSaveProblem={(updatedProb) => {
+          if (activeContest) {
+            const nextProblems = activeContest.problems.map((p) =>
+              p.id === updatedProb.id ? updatedProb : p
+            );
+            const nextContest = { ...activeContest, problems: nextProblems };
+            onUpdateContest(nextContest);
+            showToast('Cập nhật đề bài', `Đã lưu cấu hình bài toán "${updatedProb.code}"`, 'success');
+          }
+        }}
+      />
 
       {/* Batch Judging / Submission Uploader Dialog */}
       {showBatchModal && activeContest && (
