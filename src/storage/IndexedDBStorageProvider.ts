@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   judge0Key: '',
   autoRedirectFreopen: true,
   floatEpsilon: 0.000001,
+  concurrency: 4,
 };
 
 export class IndexedDBStorageProvider implements IStorageProvider {

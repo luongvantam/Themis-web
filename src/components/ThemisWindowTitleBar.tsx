@@ -31,17 +31,14 @@ export const ThemisWindowTitleBar: React.FC<ThemisWindowTitleBarProps> = ({
           </span>
         </div>
       </div>
-
-      {/* Right: Quick Settings action button */}
+      {/* Right: Quick Settings */}
       {onOpenSettings && (
         <button
-          type="button"
           onClick={onOpenSettings}
-          title="Mở Cấu hình hệ thống & Giao diện (F10)"
-          className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-neutral-600 dark:text-neutral-300 font-medium text-[11px] transition"
+          title="Cài đặt hệ thống (Ctrl+,)"
+          className="p-1.5 rounded-lg hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition active:scale-95"
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Cấu hình</span>
+          <Settings className="w-4 h-4" />
         </button>
       )}
     </header>

@@ -256,7 +256,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         languageId: sub.languageId,
         problem: prob,
         settings,
-        concurrency: 4, // 4 parallel tests
+        concurrency: settings.concurrency || 4, // Configurable parallel test workers
         shouldStop: () => shouldStopRef.current,
         onProgress: (_done, _total, lastRes) => {
           const vText = lastRes.verdict === 'AC' ? 'Đúng' : `Sai (${lastRes.verdict})`;

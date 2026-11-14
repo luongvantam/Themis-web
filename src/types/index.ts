@@ -74,6 +74,7 @@ export interface AppSettings {
   judge0Key?: string;
   autoRedirectFreopen: boolean;
   floatEpsilon: number;
+  concurrency?: number; // Số luồng chấm song song (mặc định 4, tối đa 12)
 }
 
 export type ColorMode = 'light' | 'dark';

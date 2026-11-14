@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  CheckCircle2, AlertCircle, Loader2, Server, Trash2, X, Settings, 
-  Sliders, ShieldCheck, KeyRound, Globe, FileCode, Sun, Moon
+import {
+  CheckCircle2, AlertCircle, Loader2, Server, Trash2, X, Settings,
+  Sliders, ShieldCheck, KeyRound, Globe, FileCode, Sun, Moon, Zap
 } from 'lucide-react';
 import { AppSettings, ColorMode } from '../types';
 import { storage } from '../storage';
@@ -15,9 +15,9 @@ interface SettingsModalProps {
   onSetColorMode: (mode: ColorMode) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ 
-  isOpen, 
-  onClose, 
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  isOpen,
+  onClose,
   onClearData,
   onSaveNotification,
   colorMode,
@@ -28,6 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     judge0Key: '',
     autoRedirectFreopen: true,
     floatEpsilon: 0.000001,
+    concurrency: 4,
   });
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -134,11 +135,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => onSetColorMode('light')}
-                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${
-                  colorMode === 'light'
+                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${colorMode === 'light'
                     ? 'bg-white dark:bg-[#1E1E22] border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-sm'
                     : 'bg-white/60 dark:bg-[#1E1E22]/60 border-black/10 dark:border-white/10 hover:border-black/20'
-                }`}
+                  }`}
               >
                 <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
                   <Sun className="w-4 h-4" />
@@ -157,11 +157,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => onSetColorMode('dark')}
-                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${
-                  colorMode === 'dark'
+                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${colorMode === 'dark'
                     ? 'bg-white dark:bg-[#1E1E22] border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-sm'
                     : 'bg-white/60 dark:bg-[#1E1E22]/60 border-black/10 dark:border-white/10 hover:border-black/20'
-                }`}
+                  }`}
               >
                 <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
                   <Moon className="w-4 h-4" />
@@ -171,7 +170,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     Giao diện Tối
                   </div>
                   <div className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
-                    Nền tối Apple Dark
+                    Nền tối
                   </div>
                 </div>
               </button>
@@ -246,11 +245,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {testResult && (
                 <div
-                  className={`flex items-center space-x-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg ${
-                    testResult.ok 
-                      ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' 
+                  className={`flex items-center space-x-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg ${testResult.ok
+                      ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400'
                       : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
-                  }`}
+                    }`}
                 >
                   {testResult.ok ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
                   <span className="truncate max-w-[210px]" title={testResult.message}>
@@ -283,14 +281,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSettings({ ...settings, autoRedirectFreopen: !settings.autoRedirectFreopen })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  settings.autoRedirectFreopen ? 'bg-[#0071E3]' : 'bg-neutral-300 dark:bg-neutral-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${settings.autoRedirectFreopen ? 'bg-[#0071E3]' : 'bg-neutral-300 dark:bg-neutral-700'
+                  }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    settings.autoRedirectFreopen ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${settings.autoRedirectFreopen ? 'translate-x-5' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>
@@ -314,6 +310,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
                 className="w-28 px-3 py-1.5 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white font-mono text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
               />
+            </div>
+
+            {/* Performance & Concurrency */}
+            <div className="pt-3 border-t border-black/[0.04] dark:border-white/[0.04] flex items-center justify-between">
+              <div className="space-y-0.5 max-w-[280px]">
+                <div className="flex items-center space-x-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-[11.5px] font-semibold text-neutral-800 dark:text-neutral-200">
+                    Số luồng chấm song song (Tăng tốc độ):
+                  </span>
+                </div>
+                <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                  Gửi đồng thời nhiều test cases lên server để rút ngắn thời gian chấm (mặc định 4 luồng, tối đa 10 luồng).
+                </p>
+              </div>
+              <div className="flex items-center space-x-1 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 rounded-xl p-1 shadow-inner">
+                {[2, 4, 6, 8, 10].map((num) => {
+                  const isSelected = (settings.concurrency || 4) === num;
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setSettings({ ...settings, concurrency: num })}
+                      className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
+                        isSelected
+                          ? 'bg-[#0071E3] text-white shadow-sm'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {num}x
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
