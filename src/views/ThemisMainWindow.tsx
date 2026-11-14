@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Contest, Submission } from '../types';
+import { Table2, BookOpen } from 'lucide-react';
+import { Contest, Submission, UITheme } from '../types';
 import { ThemisWindowTitleBar } from '../components/ThemisWindowTitleBar';
 import { ThemisMenuBar } from '../components/ThemisMenuBar';
 import { ThemisToolbar } from '../components/ThemisToolbar';
@@ -64,6 +65,14 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   const [selectedProblemForEdit, setSelectedProblemForEdit] = useState<string | null>(null);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState<'scoreboard' | 'docs'>('scoreboard');
+  const [uiTheme, setUiTheme] = useState<UITheme>(
+    () => (localStorage.getItem('themis_ui_theme') as UITheme) || 'apple'
+  );
+
+  const handleToggleTheme = (newTheme: UITheme) => {
+    setUiTheme(newTheme);
+    localStorage.setItem('themis_ui_theme', newTheme);
+  };
 
   // Selective judging filters: By default all problems and all students are selected (ticked)
   const [selectedStudentNames, setSelectedStudentNames] = useState<Set<string>>(new Set());
@@ -1067,14 +1076,25 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#ECE9D8] select-none font-sans overflow-hidden">
-      {/* 1. Classic Windows Title Bar */}
-      <ThemisWindowTitleBar title={activeContest?.title || ''} />
+    <div
+      className={`flex flex-col h-screen w-screen select-none font-sans overflow-hidden transition-colors ${
+        uiTheme === 'apple'
+          ? 'bg-[#F5F5F7] text-neutral-900 antialiased'
+          : 'bg-[#ECE9D8] text-slate-800'
+      }`}
+    >
+      {/* 1. Title Bar */}
+      <ThemisWindowTitleBar
+        title={activeContest?.title || ''}
+        theme={uiTheme}
+        onToggleTheme={handleToggleTheme}
+      />
 
-      {/* 2. Classic Windows Menu Bar */}
+      {/* 2. Menu Bar */}
       <ThemisMenuBar
         contestTitle={activeContest?.title || ''}
         isJudging={isJudging}
+        theme={uiTheme}
         onNewContest={onNewContest}
         onOpenTaskFolder={() => taskFolderInputRef.current?.click()}
         onOpenZip={() => zipInputRef.current?.click()}
@@ -1104,11 +1124,12 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         onShowDocs={() => setMainTab('docs')}
       />
 
-      {/* 3. Classic Windows Toolbar */}
+      {/* 3. Toolbar */}
       <ThemisToolbar
         isJudging={isJudging}
         isSelectiveJudging={isSelectiveJudging}
         selectedSubmissionsCount={targetSubmissionsToJudge.length}
+        theme={uiTheme}
         onOpenSelectiveModal={() => setShowSelectiveModal(true)}
         onStartJudging={handleStartJudging}
         onPauseJudging={() => setIsPaused(!isPaused)}
@@ -1164,33 +1185,66 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         className="hidden"
       />
 
-      {/* 4. Classic Windows Tab Bar (Bảng điểm / Hướng dẫn - matching Delphi TPageControl) */}
-      <div className="flex items-center space-x-1 px-2 pt-1 bg-[#ECE9D8] border-b border-[#919B9C] select-none text-[12px]">
-        <button
-          onClick={() => setMainTab('scoreboard')}
-          className={`px-4 py-1 font-sans rounded-t-sm transition ${
-            mainTab === 'scoreboard'
-              ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
-              : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
-          }`}
-        >
-          Bảng điểm
-        </button>
-        <button
-          onClick={() => setMainTab('docs')}
-          className={`px-4 py-1 font-sans rounded-t-sm transition ${
-            mainTab === 'docs'
-              ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
-              : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
-          }`}
-        >
-          Hướng dẫn (F1)
-        </button>
-      </div>
+      {/* 4. Tab Bar (Bảng điểm / Hướng dẫn F1) */}
+      {uiTheme === 'apple' ? (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-white/60 dark:bg-[#1A1A1E]/60 backdrop-blur-md border-b border-black/[0.06] select-none text-[12px]">
+          <div className="inline-flex p-0.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-lg">
+            <button
+              onClick={() => setMainTab('scoreboard')}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
+                mainTab === 'scoreboard'
+                  ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900'
+              }`}
+            >
+              <Table2 className="w-3.5 h-3.5" />
+              <span>Bảng điểm (F5)</span>
+            </button>
+            <button
+              onClick={() => setMainTab('docs')}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
+                mainTab === 'docs'
+                  ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Hướng dẫn sử dụng (F1)</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center space-x-1 px-2 pt-1 bg-[#ECE9D8] border-b border-[#919B9C] select-none text-[12px]">
+          <button
+            onClick={() => setMainTab('scoreboard')}
+            className={`px-4 py-1 font-sans rounded-t-sm transition ${
+              mainTab === 'scoreboard'
+                ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
+                : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
+            }`}
+          >
+            Bảng điểm
+          </button>
+          <button
+            onClick={() => setMainTab('docs')}
+            className={`px-4 py-1 font-sans rounded-t-sm transition ${
+              mainTab === 'docs'
+                ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
+                : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
+            }`}
+          >
+            Hướng dẫn (F1)
+          </button>
+        </div>
+      )}
 
       {mainTab === 'scoreboard' ? (
         /* Work Area: Scoreboard DataGridView + Log Console */
-        <div className="flex-1 flex flex-col p-1.5 space-y-1.5 overflow-hidden min-h-0 bg-[#F0F0F0]">
+        <div
+          className={`flex-1 flex flex-col p-2 space-y-2 overflow-hidden min-h-0 ${
+            uiTheme === 'apple' ? 'bg-[#F5F5F7]' : 'bg-[#F0F0F0] p-1.5 space-y-1.5'
+          }`}
+        >
           {/* Top: Scoreboard DataGridView */}
           <div className="flex-[3] min-h-[180px] overflow-hidden">
             <ThemisScoreboardGrid
@@ -1198,6 +1252,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
               submissions={submissions}
               selectedStudentNames={selectedStudentNames}
               selectedProblemCodes={selectedProblemCodes}
+              theme={uiTheme}
               onToggleStudent={handleToggleStudent}
               onToggleAllStudents={handleToggleAllStudents}
               onToggleProblem={handleToggleProblem}
@@ -1218,34 +1273,53 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
           </div>
 
           {/* Splitter bar */}
-          <div className="h-1 bg-[#D0D0D0] hover:bg-[#0078D7] cursor-row-resize border-t border-b border-[#B8B8B8] select-none shrink-0" />
+          <div
+            className={`cursor-row-resize select-none shrink-0 transition-colors ${
+              uiTheme === 'apple'
+                ? 'h-1.5 flex items-center justify-center group'
+                : 'h-1 bg-[#D0D0D0] hover:bg-[#0078D7] border-t border-b border-[#B8B8B8]'
+            }`}
+          >
+            {uiTheme === 'apple' && (
+              <div className="w-12 h-1 rounded-full bg-black/15 group-hover:bg-[#0071E3] transition-colors" />
+            )}
+          </div>
 
           {/* Bottom: Log Console */}
           <div className="flex-[2] min-h-[130px] overflow-hidden">
-            <ThemisLogConsole logs={logs} onClearLogs={() => setLogs([])} />
+            <ThemisLogConsole logs={logs} theme={uiTheme} onClearLogs={() => setLogs([])} />
           </div>
         </div>
       ) : (
-        /* Docs Area: Authentic Delphi Documentation */
-        <div className="flex-1 bg-white overflow-hidden p-2 flex flex-col">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 text-xs">
-            <span className="font-semibold text-slate-700">Tài liệu hướng dẫn Themis</span>
+        /* Docs Area */
+        <div
+          className={`flex-1 overflow-hidden p-3 flex flex-col ${
+            uiTheme === 'apple' ? 'bg-[#F5F5F7]' : 'bg-white p-2'
+          }`}
+        >
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/10 text-xs">
+            <span className="font-semibold text-neutral-800">Tài liệu hướng dẫn Themis</span>
           </div>
           <iframe
             src="/docs/themis.html"
             title="Themis Documentation"
-            className="w-full flex-1 border border-[#D0D0D0] rounded-sm bg-white"
+            className={`w-full flex-1 bg-white ${
+              uiTheme === 'apple'
+                ? 'rounded-xl border border-black/10 shadow-sm'
+                : 'border border-[#D0D0D0] rounded-sm'
+            }`}
           />
         </div>
       )}
 
-      {/* 5. Classic Windows StatusStrip */}
+      {/* 5. Status Bar */}
       <ThemisStatusBar
         statusText={statusText}
         isJudging={isJudging}
         progressPercent={progressPercent}
         totalSubmissions={submissions.length}
         totalProblems={activeContest?.problems.length || 0}
+        theme={uiTheme}
       />
 
       {/* Modals & Dialogs */}
@@ -1312,6 +1386,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         isOpen={showStudentManagerModal}
         contest={activeContest}
         submissions={submissions}
+        theme={uiTheme}
         initialStudentName={selectedStudentForEdit}
         onClose={() => {
           setShowStudentManagerModal(false);
@@ -1357,6 +1432,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       {/* About Dialog */}
       <ThemisAboutModal
         isOpen={showAboutModal}
+        theme={uiTheme}
         onClose={() => setShowAboutModal(false)}
       />
     </div>

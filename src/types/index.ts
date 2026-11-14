@@ -76,3 +76,6 @@ export interface AppSettings {
   floatEpsilon: number;
 }
 
+export type UITheme = 'apple' | 'classic';
+
+
