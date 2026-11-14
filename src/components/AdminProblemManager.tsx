@@ -9,11 +9,13 @@ import { parseThemisZip, parseThemisTaskFolder } from '../utils/zipParser';
 interface AdminProblemManagerProps {
   contest: Contest;
   onUpdateContest: (updated: Contest) => void;
+  initialProblemCode?: string | null;
 }
 
 export const AdminProblemManager: React.FC<AdminProblemManagerProps> = ({
   contest,
   onUpdateContest,
+  initialProblemCode,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -32,6 +34,17 @@ export const AdminProblemManager: React.FC<AdminProblemManagerProps> = ({
   // Problem & Test Case Editor state
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
   const [viewingTestCase, setViewingTestCase] = useState<TestCase | null>(null);
+
+  useEffect(() => {
+    if (initialProblemCode) {
+      const found = contest.problems.find(
+        (p) => p.code.toUpperCase() === initialProblemCode.toUpperCase()
+      );
+      if (found) {
+        setEditingProblem(found);
+      }
+    }
+  }, [initialProblemCode, contest.problems]);
 
   useEffect(() => {
     if (folderInputRef.current) {

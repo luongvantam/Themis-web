@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Search, Edit2, Trash2, RotateCcw, Plus, Check, X } from 'lucide-react';
 import { Contest, Submission } from '../types';
 import { calculateScoreboard, ScoreboardRow } from '../utils/csvExporter';
@@ -13,6 +13,7 @@ interface ThemisStudentManagerModalProps {
   onRejudgeStudent: (studentName: string) => void;
   onAddStudent: (studentName: string) => void;
   onClearAllStudents: () => Promise<void>;
+  initialStudentName?: string | null;
 }
 
 export const ThemisStudentManagerModal: React.FC<ThemisStudentManagerModalProps> = ({
@@ -25,12 +26,24 @@ export const ThemisStudentManagerModal: React.FC<ThemisStudentManagerModalProps>
   onRejudgeStudent,
   onAddStudent,
   onClearAllStudents,
+  initialStudentName,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [newNameInput, setNewNameInput] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
   const [showAddBox, setShowAddBox] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && initialStudentName) {
+      setSearchTerm(initialStudentName);
+      setEditingStudent(initialStudentName);
+      setNewNameInput(initialStudentName);
+    } else if (isOpen && !initialStudentName) {
+      setSearchTerm('');
+      setEditingStudent(null);
+    }
+  }, [isOpen, initialStudentName]);
 
   if (!isOpen || !contest) return null;
 

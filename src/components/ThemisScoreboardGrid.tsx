@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Trophy, Edit2, Trash2, Users, Filter } from 'lucide-react';
+import { Search, Trophy, Users, Filter } from 'lucide-react';
 import { Contest, Submission } from '../types';
 import { calculateScoreboard, ScoreboardRow } from '../utils/csvExporter';
 
@@ -13,13 +13,12 @@ interface ThemisScoreboardGridProps {
     contestantName: string,
     problemCode: string
   ) => void;
-  onOpenStudentManager?: () => void;
+  onOpenStudentManager?: (studentName?: string) => void;
+  onOpenProblemConfig?: (problemCode?: string) => void;
   onOpenSelectiveJudgeModal?: () => void;
   onToggleStudent?: (name: string) => void;
   onToggleAllStudents?: () => void;
   onToggleProblem?: (code: string) => void;
-  onRenameStudent?: (oldName: string, newName: string) => Promise<void>;
-  onDeleteStudent?: (studentName: string) => Promise<void>;
 }
 
 export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
@@ -29,12 +28,11 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
   selectedProblemCodes,
   onSelectSubmissionDetail,
   onOpenStudentManager,
+  onOpenProblemConfig,
   onOpenSelectiveJudgeModal,
   onToggleStudent,
   onToggleAllStudents,
   onToggleProblem,
-  onRenameStudent,
-  onDeleteStudent,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
@@ -65,21 +63,6 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
       onSelectSubmissionDetail(candidateSubs[0], contestantName, problemCode);
     } else {
       onSelectSubmissionDetail(null, contestantName, problemCode);
-    }
-  };
-
-  const handleInlineRename = async (oldName: string) => {
-    const newName = prompt(`Nhập tên mới cho học sinh "${oldName}":`, oldName);
-    if (newName && newName.trim() && newName.trim() !== oldName && onRenameStudent) {
-      await onRenameStudent(oldName, newName.trim());
-    }
-  };
-
-  const handleInlineDelete = async (name: string) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa học sinh "${name}" và toàn bộ bài nộp của em này?`)) {
-      if (onDeleteStudent) {
-        await onDeleteStudent(name);
-      }
     }
   };
 
@@ -121,7 +104,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
 
           {onOpenStudentManager && (
             <button
-              onClick={onOpenStudentManager}
+              onClick={() => onOpenStudentManager()}
               title="Mở bảng quản lý đổi tên, xóa học sinh"
               className="flex items-center space-x-1.5 px-2 py-0.5 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-slate-900 rounded-none font-semibold text-[11px] shadow-[1px_1px_0_#404040] transition active:translate-y-px"
             >
@@ -180,7 +163,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                 return (
                   <th
                     key={p.id}
-                    className={`py-1 px-2 text-center border-t border-l border-white border-r border-b border-[#999999] min-w-[90px] bg-gradient-to-b from-[#FAF8F5] to-[#E3DFCE] transition-opacity ${
+                    className={`py-1 px-2 text-center border-t border-l border-white border-r border-b border-[#999999] min-w-[90px] bg-gradient-to-b from-[#FAF8F5] to-[#E3DFCE] transition-opacity select-none ${
                       !isProbChecked ? 'opacity-50 bg-[#E8E8E8]' : ''
                     }`}
                   >
@@ -194,9 +177,23 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                           className="cursor-pointer w-3 h-3 text-blue-600 rounded border-slate-300"
                         />
                       )}
-                      <span className="font-bold text-[#003366]">{p.code}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenProblemConfig?.(p.code);
+                        }}
+                        title={`Bấm vào để cấu hình, chỉnh sửa bài ${p.code} và bộ test`}
+                        className="font-bold text-[#003366] hover:text-[#0055EA] hover:underline cursor-pointer focus:outline-none"
+                      >
+                        {p.code}
+                      </button>
                     </div>
-                    <div className="text-[10px] text-slate-500 font-normal">
+                    <div
+                      onClick={() => onOpenProblemConfig?.(p.code)}
+                      title={`Bấm vào để cấu hình, chỉnh sửa bài ${p.code}`}
+                      className="text-[10px] text-slate-500 font-normal cursor-pointer hover:underline hover:text-[#0055EA]"
+                    >
                       ({p.points}đ)
                       {!isProbChecked && <span className="ml-1 text-rose-600 font-bold">(tắt)</span>}
                     </div>
@@ -243,7 +240,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                     }`}
                   >
                     {/* STT with Checkbox */}
-                    <td className="py-1 px-1.5 text-center text-slate-500 border-r border-b border-[#E0E0E0] font-mono text-[11px] bg-[#F7F7F7]">
+                    <td className="py-1 px-1.5 text-center text-slate-500 border-r border-b border-[#E0E0E0] font-mono text-[11px] bg-[#F7F7F7] group-hover:bg-[#EDF5FD] transition-colors">
                       <div className="flex items-center justify-center space-x-1">
                         {onToggleStudent && (
                           <input
@@ -261,8 +258,16 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                       </div>
                     </td>
 
-                    {/* Contestant Name with inline quick actions */}
-                    <td className="py-1 px-3 border-r border-b border-[#E0E0E0] font-semibold text-[#000000]">
+                    {/* Contestant Name */}
+                    <td
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedRowIndex(index);
+                        onOpenStudentManager?.(row.contestantName);
+                      }}
+                      title={`Bấm vào để mở bảng quản lý / sửa thông tin thí sinh "${row.contestantName}"`}
+                      className="py-1 px-3 border-r border-b border-[#E0E0E0] font-semibold text-[#003366] cursor-pointer hover:underline hover:text-[#0055EA] hover:bg-[#D4E8FF] transition-colors"
+                    >
                       <div className="flex items-center justify-between">
                         <span className="truncate flex items-center space-x-1">
                           <span>{row.contestantName}</span>
@@ -272,30 +277,6 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                             </span>
                           )}
                         </span>
-                        <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition ml-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInlineRename(row.contestantName);
-                            }}
-                            title={`Đổi tên học sinh "${row.contestantName}"`}
-                            className="p-0.5 text-slate-400 hover:text-[#0078D7] rounded transition"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInlineDelete(row.contestantName);
-                            }}
-                            title={`Xóa học sinh "${row.contestantName}"`}
-                            className="p-0.5 text-slate-400 hover:text-rose-600 rounded transition"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
                       </div>
                     </td>
 
@@ -324,13 +305,13 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                               ? `Điểm: ${score.toFixed(1)} / ${prob.points}. Nhấn để xem chi tiết`
                               : hasSubmitted
                               ? `Chưa chấm bài ${prob.code} của ${row.contestantName}. Nhấn để xem file`
-                              : `Chưa nộp bài ${prob.code}. Nhấn để xem chẩn đoán file!`
+                              : `Chưa nộp bài ${prob.code}. Nhấn để nạp file mã nguồn hoặc chẩn đoán!`
                           }
-                          className={`py-1 px-2 text-center border-r border-b border-[#E0E0E0] font-mono text-[11px] cursor-pointer hover:underline ${
+                          className={`py-1 px-2 text-center border-r border-b border-[#E0E0E0] font-mono text-[11px] cursor-pointer hover:bg-[#D4E8FF] hover:underline transition-colors ${
                             !willBeJudged
-                              ? 'bg-[#F3F4F6] text-slate-400'
+                              ? 'text-slate-400'
                               : !hasSubmitted
-                              ? 'text-slate-400 hover:text-slate-700 bg-slate-50'
+                              ? 'text-slate-400 hover:text-slate-800'
                               : !isGraded || score === undefined
                               ? 'text-slate-400'
                               : score === prob.points

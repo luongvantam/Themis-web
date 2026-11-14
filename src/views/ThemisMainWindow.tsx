@@ -61,6 +61,8 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showStudentManagerModal, setShowStudentManagerModal] = useState(false);
   const [showSelectiveModal, setShowSelectiveModal] = useState(false);
+  const [selectedProblemForEdit, setSelectedProblemForEdit] = useState<string | null>(null);
+  const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState<'scoreboard' | 'docs'>('scoreboard');
 
   // Selective judging filters: By default all problems and all students are selected (ticked)
@@ -1204,9 +1206,14 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
                 setSelectedSubmission(sub);
                 setSelectedCellInfo({ contestantName: contestant, problemCode: code });
               }}
-              onOpenStudentManager={() => setShowStudentManagerModal(true)}
-              onRenameStudent={handleRenameStudent}
-              onDeleteStudent={handleDeleteStudent}
+              onOpenStudentManager={(name) => {
+                setSelectedStudentForEdit(name || null);
+                setShowStudentManagerModal(true);
+              }}
+              onOpenProblemConfig={(code) => {
+                setSelectedProblemForEdit(code || null);
+                setShowTasksModal(true);
+              }}
             />
           </div>
 
@@ -1249,7 +1256,10 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
             <div className="bg-gradient-to-r from-[#005A9E] via-[#0078D7] to-[#1084D9] text-white h-7 px-2 flex items-center justify-between select-none">
               <span className="font-semibold text-[12px]">Themis - Cấu hình danh sách bài thi & Test Cases</span>
               <button
-                onClick={() => setShowTasksModal(false)}
+                onClick={() => {
+                  setShowTasksModal(false);
+                  setSelectedProblemForEdit(null);
+                }}
                 className="w-6 h-5 hover:bg-[#E81123] hover:text-white flex items-center justify-center text-slate-200 transition"
               >
                 ✕
@@ -1258,6 +1268,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
             <div className="p-4 overflow-y-auto flex-1 bg-[#F5F6F7]">
               <AdminProblemManager
                 contest={activeContest}
+                initialProblemCode={selectedProblemForEdit}
                 onUpdateContest={(c) => {
                   onUpdateContest(c);
                   addLog(`Đã cập nhật danh sách bài thi cho kỳ thi "${c.title}"`, 'info');
@@ -1301,7 +1312,11 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         isOpen={showStudentManagerModal}
         contest={activeContest}
         submissions={submissions}
-        onClose={() => setShowStudentManagerModal(false)}
+        initialStudentName={selectedStudentForEdit}
+        onClose={() => {
+          setShowStudentManagerModal(false);
+          setSelectedStudentForEdit(null);
+        }}
         onRenameStudent={handleRenameStudent}
         onDeleteStudent={handleDeleteStudent}
         onRejudgeStudent={handleRejudgeStudent}
