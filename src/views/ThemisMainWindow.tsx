@@ -1165,7 +1165,6 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       {/* 1. Title Bar */}
       <ThemisWindowTitleBar
         title={activeContest?.title || ''}
-        onOpenSettings={() => setShowSettingsModal(true)}
       />
 
       {/* 2. Menu Bar */}
