@@ -1,0 +1,9 @@
+name = "themis-web"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-23"
+
+# Optional Cloudflare Pages environment variables
+[vars]
+JUDGE0_URL = "https://ce.judge0.com"
+# JUDGE0_KEY = ""
+

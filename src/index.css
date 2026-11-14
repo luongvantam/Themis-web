@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Windows Desktop Classic & Modern Typography & Colors */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  background-color: #F0F2F5;
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Classic Windows Bevel & Inset Borders */
+.win-border {
+  border-top: 1px solid #FFFFFF;
+  border-left: 1px solid #FFFFFF;
+  border-right: 1px solid #808080;
+  border-bottom: 1px solid #808080;
+}
+
+.win-border-inset {
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #FFFFFF;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+/* Windows Scrollbar */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+::-webkit-scrollbar-track {
+  background: #F0F0F0;
+  border: 1px solid #D0D0D0;
+}
+::-webkit-scrollbar-thumb {
+  background: #CDCDCD;
+  border: 1px solid #B0B0B0;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A6A6A6;
+}
