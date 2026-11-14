@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, AlertCircle, Loader2, Server, Trash2, X, Settings } from 'lucide-react';
+import { 
+  CheckCircle2, AlertCircle, Loader2, Server, Trash2, X, Settings, 
+  Sliders, ShieldCheck, KeyRound, Globe, FileCode
+} from 'lucide-react';
 import { AppSettings } from '../types';
 import { storage } from '../storage';
 
@@ -7,9 +10,15 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClearData?: () => void;
+  onSaveNotification?: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onClearData }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onClearData,
+  onSaveNotification 
+}) => {
   const [settings, setSettings] = useState<AppSettings>({
     judge0Url: 'https://ce.judge0.com',
     judge0Key: '',
@@ -31,6 +40,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await storage.saveSettings(settings);
+    if (onSaveNotification) {
+      onSaveNotification();
+    }
     onClose();
   };
 
@@ -60,13 +72,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       } else {
         setTestResult({
           ok: false,
-          message: `Kết nối trả về mã lỗi HTTP ${res.status}`,
+          message: `Lỗi phản hồi HTTP ${res.status}`,
         });
       }
     } catch (err: any) {
       setTestResult({
         ok: false,
-        message: `Không thể kết nối đến máy chủ: ${err.message}.`,
+        message: `Không thể kết nối máy chủ: ${err.message}`,
       });
     } finally {
       setIsTesting(false);
@@ -77,17 +89,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
     <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white/95 dark:bg-[#1E1E22]/95 backdrop-blur-2xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl max-w-lg w-full flex flex-col overflow-hidden text-xs font-sans text-neutral-800 dark:text-neutral-100 transition-colors">
         {/* Title Bar */}
-        <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+        <div className="px-5 py-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
               <Settings className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-neutral-900 dark:text-white">
+              <h3 className="font-semibold text-[14px] text-neutral-900 dark:text-white">
                 Cấu hình hệ thống & Máy chủ chấm
               </h3>
               <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                Judge0 Sandbox Engine
+                Judge0 Sandbox • Tương thích Themis • Sai số chấm
               </p>
             </div>
           </div>
@@ -99,94 +111,135 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           </button>
         </div>
 
-        {/* Dialog Body */}
-        <form onSubmit={handleSave} className="p-5 space-y-4">
-          {/* Judge0 Sandbox Engine */}
-          <div className="p-3.5 bg-neutral-50/80 dark:bg-[#252529]/80 rounded-xl border border-black/[0.06] dark:border-white/[0.06] space-y-3">
-            <div className="flex items-center space-x-1.5 border-b border-black/[0.06] dark:border-white/[0.06] pb-2 font-semibold text-neutral-900 dark:text-white">
-              <Server className="w-4 h-4 text-blue-500" />
-              <span>Máy chủ biên dịch & chấm bài (Judge0 API)</span>
+        {/* Form Body */}
+        <form onSubmit={handleSave} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* Section 1: Server Config */}
+          <div className="bg-neutral-50/80 dark:bg-[#252529]/80 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] p-4 space-y-3.5">
+            <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] pb-2.5">
+              <div className="flex items-center space-x-2 font-semibold text-neutral-900 dark:text-white text-[12.5px]">
+                <Server className="w-4 h-4 text-blue-500" />
+                <span>Máy chủ Judge0 Sandbox Engine</span>
+              </div>
+              <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+                Online API
+              </span>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-neutral-700 dark:text-neutral-300 font-medium text-[11px]">
-                Địa chỉ máy chủ (Endpoint URL):
+            <div className="space-y-1.5">
+              <label className="flex items-center space-x-1.5 text-neutral-700 dark:text-neutral-300 font-medium text-[11.5px]">
+                <Globe className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Địa chỉ máy chủ (Endpoint URL):</span>
               </label>
               <input
                 type="text"
                 value={settings.judge0Url}
                 onChange={(e) => setSettings({ ...settings, judge0Url: e.target.value })}
                 placeholder="https://ce.judge0.com"
-                className="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E22] border border-black/10 dark:border-white/10 rounded-lg text-neutral-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner"
                 required
               />
-              <p className="text-[10px] text-neutral-400">
-                Mặc định: <code>https://ce.judge0.com</code> hoặc máy chủ tự dựng qua Docker.
-              </p>
+              <div className="flex items-center justify-between text-[10.5px] text-neutral-500 dark:text-neutral-400 px-0.5">
+                <span>Mặc định máy chủ công cộng: <code>https://ce.judge0.com</code></span>
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, judge0Url: 'https://ce.judge0.com' })}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
+                  Đặt lại mặc định
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-neutral-700 dark:text-neutral-300 font-medium text-[11px]">
-                Khóa xác thực API Key (Tùy chọn):
+            <div className="space-y-1.5">
+              <label className="flex items-center space-x-1.5 text-neutral-700 dark:text-neutral-300 font-medium text-[11.5px]">
+                <KeyRound className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Khóa xác thực API Key (Tùy chọn):</span>
               </label>
               <input
                 type="password"
                 value={settings.judge0Key}
                 onChange={(e) => setSettings({ ...settings, judge0Key: e.target.value })}
-                placeholder="Để trống nếu máy chủ không yêu cầu key"
-                className="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E22] border border-black/10 dark:border-white/10 rounded-lg text-neutral-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Để trống nếu máy chủ Judge0 không yêu cầu Token/Key"
+                className="w-full px-3 py-2 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner"
               />
             </div>
 
-            <div className="pt-1 flex items-center justify-between">
+            <div className="pt-1.5 flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleTestConnection}
                 disabled={isTesting}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E22] hover:bg-neutral-100 dark:hover:bg-white/[0.08] border border-black/10 dark:border-white/10 text-neutral-800 dark:text-neutral-200 rounded-lg font-medium shadow-sm transition active:scale-95"
+                className="flex items-center space-x-2 px-3.5 py-1.5 bg-white dark:bg-[#1C1C1E] hover:bg-neutral-100 dark:hover:bg-white/[0.08] border border-black/10 dark:border-white/10 text-neutral-800 dark:text-neutral-200 rounded-xl font-medium shadow-sm transition active:scale-95 text-xs"
               >
-                {isTesting ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" /> : <Server className="w-3.5 h-3.5 text-blue-500" />}
-                <span>{isTesting ? 'Đang kiểm tra...' : 'Kiểm tra kết nối'}</span>
+                {isTesting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                )}
+                <span>{isTesting ? 'Đang kiểm tra kết nối...' : 'Kiểm tra máy chủ'}</span>
               </button>
 
               {testResult && (
                 <div
-                  className={`flex items-center space-x-1 text-[11px] ${
-                    testResult.ok ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-rose-600 dark:text-rose-400'
+                  className={`flex items-center space-x-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg ${
+                    testResult.ok 
+                      ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' 
+                      : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
                   }`}
                 >
-                  {testResult.ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
-                  <span className="truncate max-w-[220px]" title={testResult.message}>{testResult.message}</span>
+                  {testResult.ok ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
+                  <span className="truncate max-w-[210px]" title={testResult.message}>
+                    {testResult.message}
+                  </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Compilation & Compatibility Settings */}
-          <div className="p-3.5 bg-neutral-50/80 dark:bg-[#252529]/80 rounded-xl border border-black/[0.06] dark:border-white/[0.06] space-y-2.5">
-            <div className="font-semibold text-neutral-900 dark:text-white border-b border-black/[0.06] dark:border-white/[0.06] pb-1.5">
-              Tùy chọn tương thích mã nguồn Themis
+          {/* Section 2: Compatibility & Compiler */}
+          <div className="bg-neutral-50/80 dark:bg-[#252529]/80 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] p-4 space-y-3.5">
+            <div className="flex items-center space-x-2 font-semibold text-neutral-900 dark:text-white text-[12.5px] border-b border-black/[0.06] dark:border-white/[0.06] pb-2.5">
+              <Sliders className="w-4 h-4 text-indigo-500" />
+              <span>Tùy chọn tương thích mã nguồn Themis</span>
             </div>
 
-            <label className="flex items-center space-x-2.5 cursor-pointer text-neutral-800 dark:text-neutral-200">
-              <input
-                type="checkbox"
-                checked={settings.autoRedirectFreopen}
-                onChange={(e) =>
-                  setSettings({ ...settings, autoRedirectFreopen: e.target.checked })
-                }
-                className="w-4 h-4 text-blue-600 rounded border-neutral-300 dark:border-neutral-600 focus:ring-0 cursor-pointer"
-              />
-              <span className="font-medium text-[11.5px]">
-                Tự động chuyển hướng tập tin <code>freopen / assign</code> sang Standard I/O
-              </span>
-            </label>
-            <p className="text-[10px] text-neutral-400 pl-6.5">
-              Cho phép code của thí sinh dù dùng <code>freopen("BAI1.INP", "r", stdin)</code> vẫn chạy hoàn hảo trên Sandbox trực tuyến.
-            </p>
+            {/* Apple style toggle switch */}
+            <div className="flex items-start justify-between space-x-3 pt-1">
+              <div className="space-y-1">
+                <div className="font-semibold text-neutral-900 dark:text-white text-[12px] flex items-center space-x-1.5">
+                  <FileCode className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Tự động chuyển hướng freopen / assign</span>
+                </div>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                  Tự động phát hiện và chuyển các lệnh đọc ghi file trong code của thí sinh thành Standard I/O để chạy trực tuyến an toàn.
+                </p>
+              </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-black/[0.04] dark:border-white/[0.04]">
-              <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300">Độ lệch sai số số thực (Float Epsilon):</span>
+              <button
+                type="button"
+                onClick={() => setSettings({ ...settings, autoRedirectFreopen: !settings.autoRedirectFreopen })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  settings.autoRedirectFreopen ? 'bg-[#0071E3]' : 'bg-neutral-300 dark:bg-neutral-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    settings.autoRedirectFreopen ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Float epsilon */}
+            <div className="pt-3 border-t border-black/[0.04] dark:border-white/[0.04] flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[11.5px] font-semibold text-neutral-800 dark:text-neutral-200">
+                  Độ lệch sai số thực (Float Epsilon):
+                </span>
+                <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                  Ngưỡng sai số tuyệt đối khi so sánh số thực (mặc định 10⁻⁶)
+                </p>
+              </div>
               <input
                 type="number"
                 step="0.000001"
@@ -194,15 +247,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 onChange={(e) =>
                   setSettings({ ...settings, floatEpsilon: parseFloat(e.target.value) || 0.000001 })
                 }
-                className="w-24 px-2.5 py-1 bg-white dark:bg-[#1E1E22] border border-black/10 dark:border-white/10 rounded-lg text-neutral-900 dark:text-white font-mono text-xs text-right focus:outline-none"
+                className="w-28 px-3 py-1.5 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 rounded-xl text-neutral-900 dark:text-white font-mono text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
               />
             </div>
           </div>
 
-          {/* Danger Zone: Clear Cache */}
+          {/* Section 3: Danger Zone */}
           {onClearData && (
-            <div className="flex items-center justify-between p-3 bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 rounded-xl">
-              <span className="text-[11px] text-rose-700 dark:text-rose-400">Xóa toàn bộ lịch sử điểm & bài nộp:</span>
+            <div className="bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">
+                  Xóa sạch bài nộp & điểm số
+                </span>
+                <p className="text-[10.5px] text-rose-600/80 dark:text-rose-400/70">
+                  Đặt lại toàn bộ bài làm của thí sinh về trạng thái ban đầu.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -211,26 +271,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                     onClose();
                   }
                 }}
-                className="flex items-center space-x-1.5 px-3 py-1 bg-white dark:bg-[#2C2C2E] hover:bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-800 rounded-lg text-[11px] font-medium shadow-sm transition"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-white dark:bg-[#252529] hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-medium shadow-sm transition active:scale-95"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Xóa sạch bài nộp</span>
+                <span>Xóa bài nộp</span>
               </button>
             </div>
           )}
 
-          {/* Dialog Action Buttons */}
-          <div className="flex justify-end space-x-2 pt-2 border-t border-black/[0.06] dark:border-white/[0.08]">
+          {/* Footer Actions */}
+          <div className="flex justify-end space-x-2.5 pt-3 border-t border-black/[0.06] dark:border-white/[0.08]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-200 rounded-xl font-medium transition text-xs"
+              className="px-4 py-2 bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-xl font-medium transition text-xs"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-[#0071E3] hover:bg-[#0077ED] active:scale-[0.98] text-white font-medium rounded-xl text-xs shadow-sm transition"
+              className="px-5 py-2 bg-[#0071E3] hover:bg-[#0077ED] active:scale-[0.98] text-white font-medium rounded-xl text-xs shadow-md shadow-blue-500/20 transition"
             >
               Lưu cấu hình
             </button>

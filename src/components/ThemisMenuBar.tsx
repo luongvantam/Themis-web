@@ -99,7 +99,7 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
     }`;
 
   const dropdownClass =
-    'absolute left-0 top-full mt-1 bg-white/95 dark:bg-[#202024]/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-[12px] text-neutral-800 dark:text-neutral-100 animate-in fade-in zoom-in-95 duration-150 z-50';
+    'absolute left-0 top-full mt-1 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-[12px] text-neutral-800 dark:text-neutral-100 z-50';
 
   const itemHoverClass =
     'hover:bg-[#0071E3] hover:text-white rounded-lg transition-colors group';

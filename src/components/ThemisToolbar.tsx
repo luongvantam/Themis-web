@@ -247,7 +247,7 @@ export const ThemisToolbar: React.FC<ThemisToolbarProps> = ({
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white/95 dark:bg-[#202024]/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-xs text-neutral-800 dark:text-neutral-100 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-xs text-neutral-800 dark:text-neutral-100 z-50">
                 <button
                   onClick={() => { onExportCSV(); setShowExportMenu(false); }}
                   className="w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-[#0071E3] hover:text-white rounded-lg transition-colors group"

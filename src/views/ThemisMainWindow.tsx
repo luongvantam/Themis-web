@@ -6,8 +6,9 @@ import { ThemisWindowTitleBar } from '../components/ThemisWindowTitleBar';
 import { ThemisMenuBar } from '../components/ThemisMenuBar';
 import { ThemisToolbar } from '../components/ThemisToolbar';
 import { ThemisScoreboardGrid } from '../components/ThemisScoreboardGrid';
-import { ThemisLogConsole, LogEntry } from '../components/ThemisLogConsole';
 import { ThemisStatusBar } from '../components/ThemisStatusBar';
+import { ThemisToastContainer, ToastItem } from '../components/ThemisToastContainer';
+import { ThemisJudgingHUD } from '../components/ThemisJudgingHUD';
 import { ThemisSubmissionModal } from '../components/ThemisSubmissionModal';
 import { ThemisAboutModal } from '../components/ThemisAboutModal';
 import { ThemisStudentManagerModal } from '../components/ThemisStudentManagerModal';
@@ -50,11 +51,44 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   onNewContest,
 }) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [_logs, setLogs] = useState<{ id: string; timestamp: string; message: string; type: string }[]>([]);
   const [isJudging, setIsJudging] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [statusText, setStatusText] = useState('Sẵn sàng');
+
+  // Toasts
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const showToast = (title: string, description?: string, type: ToastItem['type'] = 'info') => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    setToasts((prev) => [...prev, { id, title, description, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3800);
+  };
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Judging Progress Alert Card / HUD
+  const [showJudgingHUD, setShowJudgingHUD] = useState(false);
+  const [judgingHUDData, setJudgingHUDData] = useState<{
+    currentContestant: string;
+    currentProblemCode: string;
+    currentTestCase: string;
+    currentIndex: number;
+    totalCount: number;
+    lastVerdict: any | null;
+    isCompleted: boolean;
+  }>({
+    currentContestant: '',
+    currentProblemCode: '',
+    currentTestCase: '',
+    currentIndex: 0,
+    totalCount: 0,
+    lastVerdict: null,
+    isCompleted: false,
+  });
 
   // Modals
   const [showTasksModal, setShowTasksModal] = useState(false);
@@ -133,7 +167,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     }
   }, [submissions]);
 
-  const addLog = (message: string, type: LogEntry['type'] = 'info') => {
+  const addLog = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     const now = new Date();
     const timestamp = now.toTimeString().split(' ')[0];
     setLogs((prev) => [
@@ -152,6 +186,17 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     shouldStopRef.current = false;
     setStatusText(`Đang chấm ${targetSubs.length} bài thi...`);
     addLog(`=== BẮT ĐẦU CHẤM ${targetSubs.length} BÀI THI (ĐÃ ĐẶT LẠI ĐIỂM) ===`, 'info');
+    setShowJudgingHUD(true);
+    setJudgingHUDData({
+      currentContestant: targetSubs[0]?.contestantName || '',
+      currentProblemCode: targetSubs[0]?.problemCode || '',
+      currentTestCase: 'Đang chuẩn bị...',
+      currentIndex: 1,
+      totalCount: targetSubs.length,
+      lastVerdict: null,
+      isCompleted: false,
+    });
+    setProgressPercent(0);
 
     // 1. Clear old scores and test results for all target submissions first
     const targetIds = new Set(targetSubs.map((s) => s.id));
@@ -196,6 +241,13 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
 
       setStatusText(`Đang chấm [${i + 1}/${targetSubs.length}]: ${sub.contestantName} - ${sub.problemCode}`);
       addLog(`Đang chấm [${i + 1}/${targetSubs.length}]: ${sub.contestantName} [${sub.problemCode}]...`, 'info');
+      setJudgingHUDData((prev) => ({
+        ...prev,
+        currentContestant: sub.contestantName,
+        currentProblemCode: sub.problemCode,
+        currentTestCase: 'Đang khởi chạy...',
+        currentIndex: i + 1,
+      }));
 
       // Execute tests concurrently with short-circuiting on compilation error
       const results = await executeSubmissionTests({
@@ -211,6 +263,11 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
             `  ${lastRes.testCaseName}: ${vText}. +${lastRes.score.toFixed(1)}đ (${lastRes.timeUsedMs}ms, ${lastRes.memoryUsedKb}KB)`,
             lastRes.verdict === 'AC' ? 'success' : 'error'
           );
+          setJudgingHUDData((prev) => ({
+            ...prev,
+            currentTestCase: lastRes.testCaseName,
+            lastVerdict: lastRes,
+          }));
         },
       });
 
@@ -241,6 +298,13 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     setIsJudging(false);
     setStatusText('Sẵn sàng');
     addLog('=== HOÀN THÀNH QUÁ TRÌNH CHẤM BÀI ===', 'success');
+    if (!shouldStopRef.current) {
+      setJudgingHUDData((prev) => ({
+        ...prev,
+        isCompleted: true,
+      }));
+      showToast('Hoàn thành chấm bài', `Đã chấm xong toàn bộ ${targetSubs.length} bài thi!`, 'success');
+    }
   };
 
   // Unique students and problem codes
@@ -347,6 +411,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     }
     setSubmissions(cleared);
     addLog('Đã xóa toàn bộ điểm của các thí sinh.', 'info');
+    showToast('Đã xóa điểm', 'Đã đặt lại điểm số của toàn bộ thí sinh về 0.00', 'info');
   };
 
   // Global Keyboard Shortcuts (matching Themis Delphi Windows F1-F11, Ctrl shortcuts)
@@ -479,6 +544,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     setIsJudging(false);
     setStatusText('Đã dừng chấm.');
     addLog('Người dùng đã bấm Dừng chấm (Stop).', 'warning');
+    showToast('Đã dừng chấm', 'Quá trình chấm bài đã được tạm dừng', 'warning');
   };
 
   /**
@@ -497,6 +563,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     link.click();
     document.body.removeChild(link);
     addLog(`Đã xuất kết quả ra file KetQua_${activeContest.title}.csv (chuẩn UTF-8 BOM)`, 'info');
+    showToast('Xuất CSV thành công', `Đã tải về tệp KetQua_${activeContest.title}.csv`, 'success');
   };
 
   /**
@@ -515,6 +582,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     link.click();
     document.body.removeChild(link);
     addLog(`Đã xuất bảng điểm ra file Excel KetQua_${activeContest.title}.xls`, 'info');
+    showToast('Xuất Excel thành công', `Đã tải về tệp KetQua_${activeContest.title}.xls`, 'success');
   };
 
   /**
@@ -533,6 +601,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     link.click();
     document.body.removeChild(link);
     addLog(`Đã xuất kết quả ra file Text KetQua_${activeContest.title}.txt`, 'info');
+    showToast('Xuất Text thành công', `Đã tải về tệp KetQua_${activeContest.title}.txt`, 'success');
   };
 
   /**
@@ -549,6 +618,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
     link.click();
     document.body.removeChild(link);
     addLog(`Đã lưu gói kỳ thi ${activeContest.title}.themis`, 'info');
+    showToast('Lưu kỳ thi', `Đã xuất tệp cấu hình ${activeContest.title}.themis`, 'success');
   };
 
   /**
@@ -567,8 +637,10 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       link.click();
       document.body.removeChild(link);
       addLog(`Đã lưu gói kỳ thi chuẩn Themis ${activeContest.title}.contest thành công!`, 'success');
+      showToast('Đã xuất gói kỳ thi', `Đã đóng gói ${activeContest.title}.contest chuẩn Themis`, 'success');
     } catch (err: any) {
       addLog(`Lỗi khi tạo gói .contest: ${err.message}`, 'error');
+      showToast('Lỗi xuất gói kỳ thi', err.message, 'error');
     }
   };
 
@@ -608,6 +680,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
           .join(', ')}) với tổng cộng ${totalTests} test cases!`,
         'success'
       );
+      showToast('Đã nạp Đề thi & Test cases', `Nạp thành công ${problems.length} bài toán (${totalTests} tests)`, 'success');
 
       if (warnings.length > 0) {
         warnings.forEach((w) => addLog(`Cảnh báo: ${w}`, 'warning'));
@@ -682,6 +755,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         `Đã nạp thành công ${createdSubs.length} bài nộp vào danh sách kỳ thi (Trạng thái: Chờ chấm). Nhấn F9 hoặc bấm "Chấm bài" để bắt đầu chấm.`,
         'success'
       );
+      showToast('Đã nạp bài làm thí sinh', `Đã nạp ${createdSubs.length} bài nộp của ${studentNames.length} học sinh`, 'success');
     } catch (err: any) {
       addLog(`Lỗi nạp thư mục học sinh: ${err.message}`, 'error');
     } finally {
@@ -702,6 +776,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         const imported = importContestFromJSON(text);
         onUpdateContest(imported);
         addLog(`Đã nạp thành công kỳ thi "${imported.title}" từ file .themis!`, 'success');
+        showToast('Đã nạp kỳ thi', `Đã mở kỳ thi "${imported.title}"`, 'success');
       } catch (err: any) {
         addLog(`Lỗi đọc file .themis: ${err.message}`, 'error');
       }
@@ -729,6 +804,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
 
         onUpdateContest(updated);
         addLog(`Đã giải nén và nạp thành công ${problems.length} bài toán từ ${file.name}!`, 'success');
+        showToast('Đã nạp file ZIP', `Đã giải nén ${problems.length} bài toán từ ${file.name}`, 'success');
         if (warnings.length > 0) {
           warnings.forEach((w) => addLog(`Cảnh báo: ${w}`, 'warning'));
         }
@@ -873,6 +949,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         `Đã nạp thành công ${createdSubs.length} bài nộp lẻ vào danh sách (Chờ chấm). Nhấn F9 hoặc bấm "Chấm bài" để bắt đầu chấm.`,
         'success'
       );
+      showToast('Đã nạp tệp bài nộp', `Đã thêm ${createdSubs.length} bài nộp vào danh sách`, 'success');
     } catch (err: any) {
       addLog(`Lỗi khi nạp file lẻ: ${err.message}`, 'error');
     } finally {
@@ -928,8 +1005,10 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         setSelectedCellInfo({ ...selectedCellInfo, contestantName: newName });
       }
       addLog(`Đã đổi tên thí sinh "${oldName}" thành "${newName}".`, 'info');
+      showToast('Đổi tên thí sinh', `Đã đổi "${oldName}" thành "${newName}"`, 'success');
     } catch (err: any) {
       addLog(`Lỗi khi đổi tên thí sinh: ${err.message}`, 'error');
+      showToast('Lỗi đổi tên', err.message, 'error');
     }
   };
 
@@ -947,8 +1026,10 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         setSelectedCellInfo(null);
       }
       addLog(`Đã xoá thí sinh "${studentName}" và toàn bộ bài làm liên quan.`, 'warning');
+      showToast('Đã xóa thí sinh', `Đã xóa thí sinh "${studentName}"`, 'info');
     } catch (err: any) {
       addLog(`Lỗi khi xoá thí sinh: ${err.message}`, 'error');
+      showToast('Lỗi xóa thí sinh', err.message, 'error');
     }
   };
 
@@ -1008,6 +1089,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       `Đã thêm thí sinh "${cleanName}". Bạn có thể bấm vào ô bài trên bảng điểm để nạp file mã nguồn hoặc chỉnh sửa code trực tiếp.`,
       'success'
     );
+    showToast('Thêm thí sinh', `Đã thêm thí sinh "${cleanName}"`, 'success');
   };
 
   /**
@@ -1021,6 +1103,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       setSelectedSubmission(null);
       setSelectedCellInfo(null);
       addLog('Đã xoá toàn bộ danh sách thí sinh và bài làm trong kỳ thi!', 'warning');
+      showToast('Đã xóa danh sách', 'Đã xóa toàn bộ thí sinh trong kỳ thi', 'info');
     } catch (err: any) {
       addLog(`Lỗi khi xoá toàn bộ thí sinh: ${err.message}`, 'error');
     }
@@ -1042,6 +1125,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         `Đã lưu mã nguồn mới cho bài [${sub.problemCode}] của "${sub.contestantName}". Bắt đầu chấm lại ngay...`,
         'info'
       );
+      showToast('Lưu mã nguồn', `Đang chấm lại bài của "${sub.contestantName}"`, 'info');
       await judgeSubmissionList([updatedSub]);
       const reloaded = await storage.getSubmission(sub.id);
       if (reloaded) {
@@ -1049,6 +1133,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       }
     } catch (err: any) {
       addLog(`Lỗi lưu & chấm lại code: ${err.message}`, 'error');
+      showToast('Lỗi lưu mã nguồn', err.message, 'error');
     }
   };
 
@@ -1064,6 +1149,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       setSelectedSubmission(null);
       setSelectedCellInfo(null);
       addLog('Đã xoá bài nộp thành công.', 'warning');
+      showToast('Đã xóa bài nộp', 'Bài nộp đã được xóa khỏi hệ thống', 'info');
     } catch (err: any) {
       addLog(`Lỗi khi xoá bài nộp: ${err.message}`, 'error');
     }
@@ -1200,43 +1286,30 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       </div>
 
       {mainTab === 'scoreboard' ? (
-        /* Work Area: Scoreboard DataGridView + Log Console */
-        <div className="flex-1 flex flex-col p-2 space-y-2 overflow-hidden min-h-0 bg-[#F5F5F7] dark:bg-[#121214] transition-colors">
-          {/* Top: Scoreboard DataGridView */}
-          <div className="flex-[3] min-h-[180px] overflow-hidden">
-            <ThemisScoreboardGrid
-              contest={activeContest}
-              submissions={submissions}
-              selectedStudentNames={selectedStudentNames}
-              selectedProblemCodes={selectedProblemCodes}
-              onToggleStudent={handleToggleStudent}
-              onToggleAllStudents={handleToggleAllStudents}
-              onToggleProblem={handleToggleProblem}
-              onOpenSelectiveJudgeModal={() => setShowSelectiveModal(true)}
-              onSelectSubmissionDetail={(sub, contestant, code) => {
-                setSelectedSubmission(sub);
-                setSelectedCellInfo({ contestantName: contestant, problemCode: code });
-              }}
-              onOpenStudentManager={(name) => {
-                setSelectedStudentForEdit(name || null);
-                setShowStudentManagerModal(true);
-              }}
-              onOpenProblemConfig={(code) => {
-                setSelectedProblemForEdit(code || null);
-                setShowTasksModal(true);
-              }}
-            />
-          </div>
-
-          {/* Splitter bar */}
-          <div className="h-1.5 flex items-center justify-center cursor-row-resize select-none shrink-0 group">
-            <div className="w-12 h-1 rounded-full bg-black/15 dark:bg-white/20 group-hover:bg-[#0071E3] transition-colors" />
-          </div>
-
-          {/* Bottom: Log Console */}
-          <div className="flex-[2] min-h-[130px] overflow-hidden">
-            <ThemisLogConsole logs={logs} onClearLogs={() => setLogs([])} />
-          </div>
+        /* Work Area: Full Height Scoreboard */
+        <div className="flex-1 flex flex-col p-2 overflow-hidden min-h-0 bg-[#F5F5F7] dark:bg-[#121214] transition-colors">
+          <ThemisScoreboardGrid
+            contest={activeContest}
+            submissions={submissions}
+            selectedStudentNames={selectedStudentNames}
+            selectedProblemCodes={selectedProblemCodes}
+            onToggleStudent={handleToggleStudent}
+            onToggleAllStudents={handleToggleAllStudents}
+            onToggleProblem={handleToggleProblem}
+            onOpenSelectiveJudgeModal={() => setShowSelectiveModal(true)}
+            onSelectSubmissionDetail={(sub, contestant, code) => {
+              setSelectedSubmission(sub);
+              setSelectedCellInfo({ contestantName: contestant, problemCode: code });
+            }}
+            onOpenStudentManager={(name) => {
+              setSelectedStudentForEdit(name || null);
+              setShowStudentManagerModal(true);
+            }}
+            onOpenProblemConfig={(code) => {
+              setSelectedProblemForEdit(code || null);
+              setShowTasksModal(true);
+            }}
+          />
         </div>
       ) : (
         /* Docs Area */
@@ -1252,13 +1325,34 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         </div>
       )}
 
-      {/* 5. Status Bar */}
+      {/* 5. Status Bar (Clean minimalist Apple footer, no progress bar) */}
       <ThemisStatusBar
         statusText={statusText}
         isJudging={isJudging}
-        progressPercent={progressPercent}
         totalSubmissions={submissions.length}
         totalProblems={activeContest?.problems.length || 0}
+      />
+
+      {/* Judging Progress Alert Card / HUD */}
+      <ThemisJudgingHUD
+        isOpen={showJudgingHUD}
+        isJudging={isJudging}
+        progressPercent={progressPercent}
+        currentContestant={judgingHUDData.currentContestant}
+        currentProblemCode={judgingHUDData.currentProblemCode}
+        currentTestCase={judgingHUDData.currentTestCase}
+        currentIndex={judgingHUDData.currentIndex}
+        totalCount={judgingHUDData.totalCount}
+        lastVerdict={judgingHUDData.lastVerdict}
+        isCompleted={judgingHUDData.isCompleted}
+        onStopJudging={handleStopJudging}
+        onClose={() => setShowJudgingHUD(false)}
+      />
+
+      {/* Apple Toast Notifications in bottom-right corner */}
+      <ThemisToastContainer
+        toasts={toasts}
+        onDismiss={dismissToast}
       />
 
       {/* Modals & Dialogs */}
@@ -1358,11 +1452,15 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+        onSaveNotification={() =>
+          showToast('Cấu hình hệ thống', 'Đã lưu cài đặt máy chủ và tùy chọn chấm bài', 'success')
+        }
         onClearData={async () => {
           if (activeContest) {
             await storage.clearSubmissions(activeContest.id);
             setSubmissions([]);
             addLog('Đã xóa toàn bộ lịch sử nộp bài của kỳ thi.', 'warning');
+            showToast('Đã xóa dữ liệu', 'Đã xóa toàn bộ lịch sử nộp bài của kỳ thi', 'info');
           }
         }}
       />
