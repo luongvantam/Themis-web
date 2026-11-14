@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, AlertCircle, Loader2, Server, Trash2, X, Settings, 
-  Sliders, ShieldCheck, KeyRound, Globe, FileCode
+  Sliders, ShieldCheck, KeyRound, Globe, FileCode, Sun, Moon
 } from 'lucide-react';
-import { AppSettings } from '../types';
+import { AppSettings, ColorMode } from '../types';
 import { storage } from '../storage';
 
 interface SettingsModalProps {
@@ -11,13 +11,17 @@ interface SettingsModalProps {
   onClose: () => void;
   onClearData?: () => void;
   onSaveNotification?: () => void;
+  colorMode: ColorMode;
+  onSetColorMode: (mode: ColorMode) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
   onClose, 
   onClearData,
-  onSaveNotification 
+  onSaveNotification,
+  colorMode,
+  onSetColorMode,
 }) => {
   const [settings, setSettings] = useState<AppSettings>({
     judge0Url: 'https://ce.judge0.com',
@@ -113,6 +117,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSave} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* Section 0: Appearance / Theme (Chủ đề màu: Sáng / Tối) */}
+          <div className="bg-neutral-50/80 dark:bg-[#252529]/80 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] pb-2.5">
+              <div className="flex items-center space-x-2 font-semibold text-neutral-900 dark:text-white text-[12.5px]">
+                <Sun className="w-4 h-4 text-amber-500" />
+                <span>Giao diện & Chủ đề màu</span>
+              </div>
+              <span className="text-[10.5px] px-2.5 py-0.5 rounded-full bg-black/[0.05] dark:bg-white/10 text-neutral-700 dark:text-neutral-300 font-medium">
+                {colorMode === 'dark' ? 'Chế độ Tối' : 'Chế độ Sáng (Mặc định)'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Option 1: Sáng (Nền trắng mặc định) */}
+              <button
+                type="button"
+                onClick={() => onSetColorMode('light')}
+                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${
+                  colorMode === 'light'
+                    ? 'bg-white dark:bg-[#1E1E22] border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-sm'
+                    : 'bg-white/60 dark:bg-[#1E1E22]/60 border-black/10 dark:border-white/10 hover:border-black/20'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                  <Sun className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-neutral-900 dark:text-white text-xs">
+                    Giao diện Sáng
+                  </div>
+                  <div className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                    Nền trắng (Mặc định)
+                  </div>
+                </div>
+              </button>
+
+              {/* Option 2: Tối */}
+              <button
+                type="button"
+                onClick={() => onSetColorMode('dark')}
+                className={`p-3 rounded-xl border flex items-center space-x-3 transition-all ${
+                  colorMode === 'dark'
+                    ? 'bg-white dark:bg-[#1E1E22] border-[#0071E3] ring-2 ring-[#0071E3]/20 shadow-sm'
+                    : 'bg-white/60 dark:bg-[#1E1E22]/60 border-black/10 dark:border-white/10 hover:border-black/20'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                  <Moon className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-neutral-900 dark:text-white text-xs">
+                    Giao diện Tối
+                  </div>
+                  <div className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                    Nền tối Apple Dark
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* Section 1: Server Config */}
           <div className="bg-neutral-50/80 dark:bg-[#252529]/80 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] p-4 space-y-3.5">
             <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] pb-2.5">

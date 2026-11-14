@@ -76,6 +76,6 @@ export interface AppSettings {
   floatEpsilon: number;
 }
 
-export type ColorMode = 'light' | 'dark' | 'system';
+export type ColorMode = 'light' | 'dark';
 
 

@@ -1165,8 +1165,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       {/* 1. Title Bar */}
       <ThemisWindowTitleBar
         title={activeContest?.title || ''}
-        colorMode={colorMode}
-        onSetColorMode={setColorMode}
+        onOpenSettings={() => setShowSettingsModal(true)}
       />
 
       {/* 2. Menu Bar */}
@@ -1482,6 +1481,8 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+        colorMode={colorMode}
+        onSetColorMode={setColorMode}
         onSaveNotification={() =>
           showToast('Cấu hình hệ thống', 'Đã lưu cài đặt máy chủ và tùy chọn chấm bài', 'success')
         }

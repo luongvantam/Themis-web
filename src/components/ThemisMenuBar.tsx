@@ -102,7 +102,7 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
     }`;
 
   const dropdownClass =
-    'absolute left-0 top-full mt-1 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-[12px] text-neutral-800 dark:text-neutral-100 z-50';
+    'absolute left-0 top-full mt-1 bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-[12px] text-neutral-800 dark:text-neutral-100 z-50 opacity-100';
 
   const itemHoverClass =
     'hover:bg-[#0071E3] hover:text-white rounded-lg transition-colors group';
@@ -110,7 +110,7 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
   return (
     <nav
       ref={menuRef}
-      className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md text-neutral-800 dark:text-neutral-200 select-none text-[12px] font-medium border-b border-black/[0.06] dark:border-white/[0.08] relative z-40 px-2 py-0.5 transition-colors"
+      className="bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-md text-neutral-800 dark:text-neutral-200 select-none text-[12px] font-medium border-b border-black/[0.06] dark:border-white/[0.08] relative z-50 px-2 py-0.5 transition-colors"
     >
       <div className="flex items-center space-x-0.5">
         {/* 1. Menu Kỳ thi */}
