@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  CheckSquare, Square, Search, Play, RotateCcw, 
-  HelpCircle, Users, FileCode2, Check, Filter
+  Search, Play, RotateCcw, 
+  HelpCircle, Users, FileCode2, Check, Filter, X
 } from 'lucide-react';
 import { Contest, Submission } from '../types';
 
@@ -62,121 +62,126 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
   );
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
-      <div className="bg-[#ECE9D8] border-2 border-t-white border-l-white border-b-[#404040] border-r-[#404040] shadow-[2px_2px_10px_rgba(0,0,0,0.5)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden text-xs win-border-outset select-none font-sans">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white/95 dark:bg-[#1E1E22]/95 backdrop-blur-2xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden text-xs select-none font-sans transition-colors">
         {/* Title Bar */}
-        <div className="bg-gradient-to-r from-[#0A246A] via-[#0055EA] to-[#A6CAF0] text-white h-7 px-2 flex items-center justify-between select-none shrink-0">
-          <div className="flex items-center space-x-1.5 font-bold text-[12px]">
-            <Filter className="w-3.5 h-3.5 text-white" />
-            <span>Themis - Tuỳ chọn chấm bài (Chấm có chọn lọc)</span>
+        <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Filter className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm text-neutral-900 dark:text-white">
+                Tuỳ chọn chấm bài (Chấm có chọn lọc)
+              </h3>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                {contest.title}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="w-5 h-5 bg-[#ECE9D8] hover:bg-[#E81123] hover:text-white border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] text-black font-bold flex items-center justify-center text-[10px] shadow-[1px_1px_0_#000] transition"
+            className="w-7 h-7 rounded-full bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Info Banner */}
-        <div className="bg-[#FFFDE7] border-b border-[#FFE082] px-3 py-2 text-slate-700 flex items-start space-x-2 shrink-0">
-          <HelpCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-[11px] leading-relaxed">
-            Mặc định Themis sẽ tick chọn chấm cho <strong>toàn bộ bài toán</strong> và <strong>toàn bộ thí sinh</strong>. 
-            Thầy/Cô có thể bỏ tick bất kỳ bài toán hoặc thí sinh nào để <strong>chỉ chấm riêng</strong> những bài hoặc thí sinh cần chấm.
+        <div className="bg-amber-50/70 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-800/40 px-4 py-2.5 text-neutral-700 dark:text-neutral-300 flex items-start space-x-2.5 shrink-0 text-xs">
+          <HelpCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-[11.5px] leading-relaxed">
+            Mặc định Themis sẽ chấm cho <strong>toàn bộ bài toán</strong> và <strong>toàn bộ thí sinh</strong>. 
+            Bạn có thể bỏ tick bất kỳ bài toán hoặc thí sinh nào để <strong>chỉ chấm riêng</strong> những mục cần thiết.
           </div>
         </div>
 
         {/* Main Body - 2 Columns */}
-        <div className="flex-1 grid grid-cols-2 gap-2 p-3 overflow-hidden bg-[#ECE9D8]">
+        <div className="flex-1 grid grid-cols-2 gap-3 p-4 overflow-hidden bg-neutral-100/50 dark:bg-[#151518]">
           {/* Column 1: Problems List */}
-          <div className="flex flex-col bg-white border border-[#7F9DB9] rounded-sm overflow-hidden shadow-sm">
+          <div className="flex flex-col bg-white dark:bg-[#1E1E22] border border-black/[0.08] dark:border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="bg-[#EBEBEB] px-2.5 py-1.5 border-b border-[#D0D0D0] flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 font-bold text-[#003366]">
-                <FileCode2 className="w-3.5 h-3.5 text-blue-600" />
+            <div className="bg-neutral-50/80 dark:bg-[#252529]/80 px-3.5 py-2 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="flex items-center space-x-1.5 font-semibold text-neutral-900 dark:text-white">
+                <FileCode2 className="w-4 h-4 text-blue-500" />
                 <span>Bài toán ({selectedProblemCodes.size}/{contest.problems.length})</span>
               </div>
               <div className="flex items-center space-x-1">
                 <button
                   type="button"
                   onClick={() => onSelectAllProblems(true)}
-                  title="Chọn tất cả bài toán"
-                  className="px-1.5 py-0.5 bg-white hover:bg-[#E5F1FB] text-[10px] text-blue-700 border border-[#B0D0F0] rounded flex items-center space-x-0.5"
+                  className="px-2 py-0.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-700 dark:text-neutral-300 rounded text-[10px] font-medium"
                 >
-                  <CheckSquare className="w-2.5 h-2.5" />
-                  <span>Tất cả</span>
+                  Tất cả
                 </button>
                 <button
                   type="button"
                   onClick={() => onSelectAllProblems(false)}
-                  title="Bỏ chọn tất cả bài toán"
-                  className="px-1.5 py-0.5 bg-white hover:bg-[#FFF0F0] text-[10px] text-rose-700 border border-[#F0C0C0] rounded flex items-center space-x-0.5"
+                  className="px-2 py-0.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-700 dark:text-neutral-300 rounded text-[10px] font-medium"
                 >
-                  <Square className="w-2.5 h-2.5" />
-                  <span>Bỏ chọn</span>
+                  Bỏ chọn
                 </button>
               </div>
             </div>
 
-            {/* Quick search */}
-            <div className="p-1.5 bg-[#F8F9FA] border-b border-[#E0E0E0]">
-              <div className="flex items-center bg-white border border-[#B0C0D0] px-1.5 py-0.5">
-                <Search className="w-3 h-3 text-slate-400 mr-1" />
+            {/* Filter Search */}
+            <div className="p-2 border-b border-black/[0.04] dark:border-white/[0.06]">
+              <div className="flex items-center bg-black/[0.03] dark:bg-white/[0.05] rounded-lg px-2.5 py-1">
+                <Search className="w-3.5 h-3.5 text-neutral-400 mr-2" />
                 <input
                   type="text"
-                  placeholder="Lọc mã bài..."
                   value={problemSearch}
                   onChange={(e) => setProblemSearch(e.target.value)}
-                  className="bg-transparent w-full text-[11px] focus:outline-none"
+                  placeholder="Lọc mã hoặc tên bài..."
+                  className="bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 text-xs focus:outline-none w-full"
                 />
               </div>
             </div>
 
-            {/* Problems list */}
-            <div className="flex-1 overflow-y-auto p-1 divide-y divide-[#F0F0F0]">
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {filteredProblems.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs italic">
+                <div className="text-center py-8 text-neutral-400 italic">
                   Không tìm thấy bài toán nào
                 </div>
               ) : (
                 filteredProblems.map((prob) => {
                   const isChecked = selectedProblemCodes.has(prob.code.toUpperCase());
-                  const probSubsCount = submissions.filter(
-                    (s) => s.problemCode.toUpperCase() === prob.code.toUpperCase()
-                  ).length;
-
                   return (
                     <label
                       key={prob.id}
-                      className={`flex items-center justify-between px-2 py-1.5 hover:bg-[#F0F7FF] cursor-pointer rounded transition select-none ${
-                        isChecked ? 'bg-[#F2F8FD]' : 'opacity-60'
+                      className={`flex items-center justify-between px-3 py-2 hover:bg-neutral-50 dark:hover:bg-white/[0.03] cursor-pointer rounded-lg transition select-none ${
+                        isChecked ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'opacity-60'
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2.5">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => onToggleProblem(prob.code)}
-                          className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-0 cursor-pointer"
+                          className="w-4 h-4 text-blue-600 rounded border-neutral-300 dark:border-neutral-600 focus:ring-0 cursor-pointer"
                         />
                         <div>
-                          <div className="font-bold text-[#003366] text-[12px] flex items-center space-x-1.5">
-                            <span>{prob.code}</span>
-                            <span className="text-[10px] font-normal text-slate-500">
-                              ({prob.points} điểm)
-                            </span>
+                          <div className="font-semibold text-neutral-900 dark:text-white text-[12px]">
+                            {prob.code} - {prob.title}
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
-                            {prob.title || 'Không có tiêu đề'} &bull; {prob.testCases.length} tests
+                          <div className="text-[10px] text-neutral-400">
+                            {prob.testCases.length} test cases &bull; {prob.points} điểm
                           </div>
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200">
-                          {probSubsCount} bài nộp
-                        </span>
+                        {isChecked ? (
+                          <span className="text-[10px] px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 rounded-full flex items-center space-x-0.5">
+                            <Check className="w-2.5 h-2.5" />
+                            <span>Sẽ chấm</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 bg-neutral-100 dark:bg-white/[0.06] text-neutral-400 rounded-full">
+                            Bỏ qua
+                          </span>
+                        )}
                       </div>
                     </label>
                   );
@@ -186,64 +191,57 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
           </div>
 
           {/* Column 2: Students List */}
-          <div className="flex flex-col bg-white border border-[#7F9DB9] rounded-sm overflow-hidden shadow-sm">
+          <div className="flex flex-col bg-white dark:bg-[#1E1E22] border border-black/[0.08] dark:border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="bg-[#EBEBEB] px-2.5 py-1.5 border-b border-[#D0D0D0] flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 font-bold text-[#003366]">
-                <Users className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="bg-neutral-50/80 dark:bg-[#252529]/80 px-3.5 py-2 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="flex items-center space-x-1.5 font-semibold text-neutral-900 dark:text-white">
+                <Users className="w-4 h-4 text-indigo-500" />
                 <span>Thí sinh ({selectedStudentNames.size}/{allStudentNames.length})</span>
               </div>
               <div className="flex items-center space-x-1">
                 <button
                   type="button"
                   onClick={() => onSelectAllStudents(true)}
-                  title="Chọn tất cả thí sinh"
-                  className="px-1.5 py-0.5 bg-white hover:bg-[#E5F1FB] text-[10px] text-blue-700 border border-[#B0D0F0] rounded flex items-center space-x-0.5"
+                  className="px-2 py-0.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-700 dark:text-neutral-300 rounded text-[10px] font-medium"
                 >
-                  <CheckSquare className="w-2.5 h-2.5" />
-                  <span>Tất cả</span>
+                  Tất cả
                 </button>
                 <button
                   type="button"
                   onClick={() => onSelectAllStudents(false)}
-                  title="Bỏ chọn tất cả thí sinh"
-                  className="px-1.5 py-0.5 bg-white hover:bg-[#FFF0F0] text-[10px] text-rose-700 border border-[#F0C0C0] rounded flex items-center space-x-0.5"
+                  className="px-2 py-0.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-700 dark:text-neutral-300 rounded text-[10px] font-medium"
                 >
-                  <Square className="w-2.5 h-2.5" />
-                  <span>Bỏ chọn</span>
+                  Bỏ chọn
                 </button>
                 <button
                   type="button"
                   onClick={onInvertStudentSelection}
-                  title="Đảo lựa chọn"
-                  className="px-1.5 py-0.5 bg-white hover:bg-[#F0F0F0] text-[10px] text-slate-700 border border-slate-300 rounded"
+                  className="px-2 py-0.5 bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-700 dark:text-neutral-300 rounded text-[10px] font-medium"
                 >
                   Đảo
                 </button>
               </div>
             </div>
 
-            {/* Quick search */}
-            <div className="p-1.5 bg-[#F8F9FA] border-b border-[#E0E0E0]">
-              <div className="flex items-center bg-white border border-[#B0C0D0] px-1.5 py-0.5">
-                <Search className="w-3 h-3 text-slate-400 mr-1" />
+            {/* Filter Search */}
+            <div className="p-2 border-b border-black/[0.04] dark:border-white/[0.06]">
+              <div className="flex items-center bg-black/[0.03] dark:bg-white/[0.05] rounded-lg px-2.5 py-1">
+                <Search className="w-3.5 h-3.5 text-neutral-400 mr-2" />
                 <input
                   type="text"
-                  placeholder="Lọc tên thí sinh..."
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
-                  className="bg-transparent w-full text-[11px] focus:outline-none"
+                  placeholder="Lọc tên thí sinh..."
+                  className="bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 text-xs focus:outline-none w-full"
                 />
               </div>
             </div>
 
-            {/* Students list */}
-            <div className="flex-1 overflow-y-auto p-1 divide-y divide-[#F0F0F0]">
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {filteredStudents.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs italic">
-                  {allStudentNames.length === 0
-                    ? 'Chưa có dữ liệu thí sinh nào'
-                    : 'Không tìm thấy thí sinh phù hợp'}
+                <div className="text-center py-8 text-neutral-400 italic">
+                  Không tìm thấy thí sinh nào
                 </div>
               ) : (
                 filteredStudents.map((name) => {
@@ -254,22 +252,22 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
                   return (
                     <label
                       key={name}
-                      className={`flex items-center justify-between px-2 py-1.5 hover:bg-[#F0F7FF] cursor-pointer rounded transition select-none ${
-                        isChecked ? 'bg-[#F2F8FD]' : 'opacity-60'
+                      className={`flex items-center justify-between px-3 py-2 hover:bg-neutral-50 dark:hover:bg-white/[0.03] cursor-pointer rounded-lg transition select-none ${
+                        isChecked ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'opacity-60'
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2.5">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => onToggleStudent(name)}
-                          className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-0 cursor-pointer"
+                          className="w-4 h-4 text-blue-600 rounded border-neutral-300 dark:border-neutral-600 focus:ring-0 cursor-pointer"
                         />
                         <div>
-                          <div className="font-semibold text-slate-800 text-[12px]">
+                          <div className="font-semibold text-neutral-900 dark:text-white text-[12px]">
                             {name}
                           </div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="text-[10px] text-neutral-400">
                             {studentSubs.length} bài nộp &bull; Hiện tại: {totalScore.toFixed(1)}đ
                           </div>
                         </div>
@@ -277,12 +275,12 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
 
                       <div className="text-right">
                         {isChecked ? (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded flex items-center space-x-0.5">
+                          <span className="text-[10px] px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 rounded-full flex items-center space-x-0.5">
                             <Check className="w-2.5 h-2.5" />
                             <span>Sẽ chấm</span>
                           </span>
                         ) : (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-400 border border-slate-200 rounded">
+                          <span className="text-[10px] px-2 py-0.5 bg-neutral-100 dark:bg-white/[0.06] text-neutral-400 rounded-full">
                             Bỏ qua
                           </span>
                         )}
@@ -296,16 +294,16 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
         </div>
 
         {/* Footer Summary & Actions */}
-        <div className="bg-[#EBEBEB] border-t border-[#D0D0D0] px-3 py-2 flex items-center justify-between shrink-0">
-          <div className="text-[11px] text-slate-700 flex items-center space-x-1.5">
-            <span className="font-semibold text-[#003366]">Kế hoạch chấm:</span>
+        <div className="bg-neutral-50/90 dark:bg-[#18181B]/95 border-t border-black/[0.06] dark:border-white/[0.08] px-5 py-3 flex items-center justify-between shrink-0">
+          <div className="text-[12px] flex items-center space-x-2">
+            <span className="font-semibold text-neutral-700 dark:text-neutral-300">Kế hoạch:</span>
             <span>
               {matchingSubmissions.length > 0 ? (
-                <span className="text-emerald-700 font-bold">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                   Sẽ chấm {matchingSubmissions.length} bài nộp ({selectedStudentNames.size} thí sinh &bull; {selectedProblemCodes.size} bài toán)
                 </span>
               ) : (
-                <span className="text-rose-600 font-bold">
+                <span className="text-rose-500 font-semibold">
                   Chưa chọn bài nộp nào! (0 bài nộp được chấm)
                 </span>
               )}
@@ -316,16 +314,16 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
             <button
               type="button"
               onClick={onResetToDefault}
-              className="px-3 py-1 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-slate-900 rounded-none font-semibold transition text-[11px] flex items-center space-x-1 shadow-[1px_1px_0_#404040]"
+              className="px-3 py-1.5 bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 text-neutral-700 dark:text-neutral-300 rounded-xl font-medium transition text-xs flex items-center space-x-1.5"
             >
-              <RotateCcw className="w-3 h-3 text-slate-700" />
-              <span>Mặc định (Chọn tất cả)</span>
+              <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Mặc định</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-slate-900 rounded-none font-semibold transition text-[11px] shadow-[1px_1px_0_#404040]"
+              className="px-4 py-1.5 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-200 rounded-xl font-medium transition text-xs"
             >
               Đóng
             </button>
@@ -337,14 +335,14 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
                 onStartJudging();
               }}
               disabled={matchingSubmissions.length === 0}
-              className={`px-4 py-1 rounded-none text-[11px] font-bold flex items-center space-x-1.5 transition border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white shadow-[1px_1px_0_#404040] ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm ${
                 matchingSubmissions.length === 0
-                  ? 'bg-[#ECE9D8] text-slate-400 opacity-50 cursor-not-allowed'
-                  : 'bg-[#EBF7EB] hover:bg-[#DCF3DC] text-[#006600]'
+                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed opacity-50'
+                  : 'bg-[#0071E3] hover:bg-[#0077ED] text-white active:scale-[0.98]'
               }`}
             >
-              <Play className="w-3 h-3 fill-current" />
-              <span>Bắt đầu chấm ngay ({matchingSubmissions.length})</span>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Chấm ngay ({matchingSubmissions.length})</span>
             </button>
           </div>
         </div>
@@ -352,4 +350,3 @@ export const ThemisSelectiveJudgeModal: React.FC<ThemisSelectiveJudgeModalProps>
     </div>
   );
 };
-

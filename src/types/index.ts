@@ -76,6 +76,6 @@ export interface AppSettings {
   floatEpsilon: number;
 }
 
-export type UITheme = 'apple' | 'classic';
+export type ColorMode = 'light' | 'dark' | 'system';
 
 

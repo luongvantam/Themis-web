@@ -4,12 +4,10 @@ import {
   Settings, HelpCircle, FileText, FolderPlus, FolderArchive, Users, Upload,
   FileSpreadsheet, Filter, CheckSquare, Square as EmptySquare, Trash2
 } from 'lucide-react';
-import { UITheme } from '../types';
 
 export interface ThemisMenuBarProps {
   contestTitle: string;
   isJudging: boolean;
-  theme?: UITheme;
   onNewContest: () => void;
   onOpenTaskFolder: () => void;
   onOpenZip: () => void;
@@ -42,7 +40,6 @@ export interface ThemisMenuBarProps {
 export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
   contestTitle: _contestTitle,
   isJudging,
-  theme = 'apple',
   onNewContest,
   onOpenTaskFolder,
   onOpenZip,
@@ -80,58 +77,56 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
         setOpenMenu(null);
       }
     };
-    window.addEventListener('mousedown', handleClickOutside);
-    return () => window.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleMenuClick = (menu: string) => {
-    setOpenMenu(openMenu === menu ? null : menu);
+  const handleMenuClick = (menuName: string) => {
+    setOpenMenu(openMenu === menuName ? null : menuName);
   };
 
-  const isApple = theme === 'apple';
+  const handleMouseEnter = (menuName: string) => {
+    if (openMenu !== null) {
+      setOpenMenu(menuName);
+    }
+  };
 
   const menuBtnClass = (menuName: string) =>
-    isApple
-      ? `px-3 py-1 rounded-md text-[12px] font-medium transition ${
-          openMenu === menuName
-            ? 'bg-black/[0.08] text-neutral-900'
-            : 'text-neutral-700 hover:text-neutral-900 hover:bg-black/[0.04]'
-        }`
-      : `px-3 py-1 hover:bg-[#B6BDD2] hover:text-[#000000] border border-transparent hover:border-[#0A246A] rounded-none transition ${
-          openMenu === menuName ? 'bg-[#B6BDD2] border-[#0A246A] text-black' : ''
-        }`;
+    `px-3 py-1 rounded-md text-[12px] font-medium transition-colors ${
+      openMenu === menuName
+        ? 'bg-black/[0.08] dark:bg-white/[0.12] text-neutral-900 dark:text-white'
+        : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
+    }`;
 
-  const dropdownClass = isApple
-    ? 'absolute left-0 top-full mt-1 bg-white/95 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-xl p-1 text-[12px] text-neutral-800 animate-in fade-in zoom-in-95 duration-150 z-50'
-    : 'absolute left-0 top-full w-72 bg-[#FFFFFF] border border-[#7A7A7A] shadow-xl py-1 text-[12px] text-black rounded-none z-50';
+  const dropdownClass =
+    'absolute left-0 top-full mt-1 bg-white/95 dark:bg-[#202024]/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-2xl rounded-xl p-1.5 text-[12px] text-neutral-800 dark:text-neutral-100 animate-in fade-in zoom-in-95 duration-150 z-50';
 
-  const itemHoverClass = isApple
-    ? 'hover:bg-[#0071E3] hover:text-white rounded-lg transition-colors'
-    : 'hover:bg-[#B6BDD2]';
+  const itemHoverClass =
+    'hover:bg-[#0071E3] hover:text-white rounded-lg transition-colors group';
 
   return (
-    <div
+    <nav
       ref={menuRef}
-      className={
-        isApple
-          ? 'bg-white/70 backdrop-blur-md text-neutral-800 select-none text-[12px] font-medium border-b border-black/[0.06] relative z-50 px-2'
-          : 'bg-[#ECE9D8] text-[#1E1E1E] select-none text-[12px] border-b border-[#D8D8D8] relative z-50'
-      }
+      className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md text-neutral-800 dark:text-neutral-200 select-none text-[12px] font-medium border-b border-black/[0.06] dark:border-white/[0.08] relative z-40 px-2 py-0.5 transition-colors"
     >
-      <div className="flex items-center px-1">
-        {/* 1. Menu Kỳ thi (F) */}
+      <div className="flex items-center space-x-0.5">
+        {/* 1. Menu Kỳ thi */}
         <div className="relative">
-          <button onClick={() => handleMenuClick('contest')} className={menuBtnClass('contest')}>
-            Kỳ thi {isApple ? '' : '(F)'}
+          <button
+            onClick={() => handleMenuClick('contest')}
+            onMouseEnter={() => handleMouseEnter('contest')}
+            className={menuBtnClass('contest')}
+          >
+            Kỳ thi
           </button>
           {openMenu === 'contest' && (
             <div className={`${dropdownClass} w-72`}>
               <button
                 onClick={() => { onNewContest(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <FolderPlus className="w-4 h-4 text-[#0078D7]" />
+                  <FolderPlus className="w-4 h-4 text-blue-500 group-hover:text-white" />
                   <span>Tạo kỳ thi mới...</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">Ctrl+N</span>
@@ -139,10 +134,10 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
 
               <button
                 onClick={() => { onOpenZip(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <FolderArchive className="w-4 h-4 text-amber-600" />
+                  <FolderArchive className="w-4 h-4 text-amber-500 group-hover:text-white" />
                   <span>Mở kỳ thi (.contest, .themis)...</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">Ctrl+O</span>
@@ -150,10 +145,10 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
 
               <button
                 onClick={() => { onOpenTaskFolder(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <FolderOpen className="w-4 h-4 text-emerald-600" />
+                  <FolderOpen className="w-4 h-4 text-emerald-500 group-hover:text-white" />
                   <span>Nạp thư mục Đề & Test...</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">F2</span>
@@ -161,10 +156,10 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
 
               <button
                 onClick={() => { onOpenSubmissionFolder(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-indigo-600" />
+                  <Users className="w-4 h-4 text-indigo-500 group-hover:text-white" />
                   <span>Nạp thư mục bài làm Học sinh...</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">F3</span>
@@ -172,23 +167,23 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
 
               <button
                 onClick={() => { onAddSubmissions(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <Upload className="w-4 h-4 text-teal-600" />
+                  <Upload className="w-4 h-4 text-teal-500 group-hover:text-white" />
                   <span>Nạp file lẻ (bổ sung/cập nhật)...</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">Shift+F3</span>
               </button>
 
-              <div className="h-px bg-black/[0.06] my-1" />
+              <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] my-1" />
 
               <button
                 onClick={() => { onSaveContest(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <Save className="w-4 h-4 text-blue-600" />
+                  <Save className="w-4 h-4 text-blue-500 group-hover:text-white" />
                   <span>Lưu trạng thái kỳ thi</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">Ctrl+S</span>
@@ -197,11 +192,11 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
               {onSaveContestZip && (
                 <button
                   onClick={() => { onSaveContestZip(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
                 >
                   <span className="flex items-center space-x-2">
-                    <FolderArchive className="w-4 h-4 text-purple-600" />
-                    <span>Xuất file gói kỳ thi (.contest)...</span>
+                    <FolderArchive className="w-4 h-4 text-violet-500 group-hover:text-white" />
+                    <span>Xuất gói kỳ thi (.themis)</span>
                   </span>
                   <span className="text-[11px] opacity-60 font-mono">Ctrl+Shift+S</span>
                 </button>
@@ -210,146 +205,27 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
           )}
         </div>
 
-        {/* 2. Menu Đề thi & Test Cases (T) */}
+        {/* 2. Menu Chấm bài */}
         <div className="relative">
-          <button onClick={() => handleMenuClick('tasks')} className={menuBtnClass('tasks')}>
-            Đề thi {isApple ? '' : '(T)'}
-          </button>
-          {openMenu === 'tasks' && (
-            <div className={`${dropdownClass} w-72`}>
-              <button
-                onClick={() => { onOpenTasksConfig(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-              >
-                <span className="flex items-center space-x-2">
-                  <Settings className="w-4 h-4 text-[#0078D7]" />
-                  <span>Cấu hình danh sách bài & bộ test...</span>
-                </span>
-                <span className="text-[11px] opacity-60 font-mono">F6</span>
-              </button>
-
-              <div className="h-px bg-black/[0.06] my-1" />
-
-              {onSelectAllTasks && (
-                <button
-                  onClick={() => { onSelectAllTasks(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <CheckSquare className="w-4 h-4 text-emerald-600" />
-                    <span>Chọn tất cả bài toán để chấm</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+Shift+A</span>
-                </button>
-              )}
-
-              {onDeselectAllTasks && (
-                <button
-                  onClick={() => { onDeselectAllTasks(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <EmptySquare className="w-4 h-4 text-slate-400" />
-                    <span>Bỏ chọn tất cả bài toán</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+Shift+D</span>
-                </button>
-              )}
-
-              {onInvertTasks && (
-                <button
-                  onClick={() => { onInvertTasks(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <Filter className="w-4 h-4 text-amber-600" />
-                    <span>Đảo ngược lựa chọn bài toán</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+Shift+I</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 3. Menu Thí sinh (C) */}
-        <div className="relative">
-          <button onClick={() => handleMenuClick('students')} className={menuBtnClass('students')}>
-            Thí sinh {isApple ? '' : '(C)'}
-          </button>
-          {openMenu === 'students' && (
-            <div className={`${dropdownClass} w-72`}>
-              {onOpenStudentManager && (
-                <button
-                  onClick={() => { onOpenStudentManager(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
-                >
-                  <Users className="w-4 h-4 text-indigo-600" />
-                  <span>Quản lý danh sách thí sinh...</span>
-                </button>
-              )}
-
-              <div className="h-px bg-black/[0.06] my-1" />
-
-              {onSelectAllStudents && (
-                <button
-                  onClick={() => { onSelectAllStudents(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <CheckSquare className="w-4 h-4 text-emerald-600" />
-                    <span>Chọn tất cả thí sinh để chấm</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+A</span>
-                </button>
-              )}
-
-              {onDeselectAllStudents && (
-                <button
-                  onClick={() => { onDeselectAllStudents(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <EmptySquare className="w-4 h-4 text-slate-400" />
-                    <span>Bỏ chọn tất cả thí sinh</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+D</span>
-                </button>
-              )}
-
-              {onInvertStudents && (
-                <button
-                  onClick={() => { onInvertStudents(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-                >
-                  <span className="flex items-center space-x-2">
-                    <Filter className="w-4 h-4 text-amber-600" />
-                    <span>Đảo ngược lựa chọn thí sinh</span>
-                  </span>
-                  <span className="text-[11px] opacity-60 font-mono">Ctrl+I</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 4. Menu Chấm bài & Kết quả (J) */}
-        <div className="relative">
-          <button onClick={() => handleMenuClick('judge')} className={menuBtnClass('judge')}>
-            Chấm bài {isApple ? '' : '(J)'}
+          <button
+            onClick={() => handleMenuClick('judge')}
+            onMouseEnter={() => handleMouseEnter('judge')}
+            className={menuBtnClass('judge')}
+          >
+            Chấm bài
           </button>
           {openMenu === 'judge' && (
-            <div className={`${dropdownClass} w-72`}>
+            <div className={`${dropdownClass} w-64`}>
               <button
                 onClick={() => { onStartJudging(); setOpenMenu(null); }}
                 disabled={isJudging}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass} ${
-                  isJudging ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
+                  isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
                 }`}
               >
                 <span className="flex items-center space-x-2">
-                  <Play className="w-4 h-4 text-emerald-600 fill-emerald-600" />
-                  <span className="font-semibold text-emerald-800">Chấm bài (F9)</span>
+                  <Play className="w-4 h-4 text-emerald-500 group-hover:text-white fill-emerald-500 group-hover:fill-white" />
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 group-hover:text-white">Bắt đầu chấm</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">F9</span>
               </button>
@@ -357,141 +233,268 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
               <button
                 onClick={() => { onPauseJudging(); setOpenMenu(null); }}
                 disabled={!isJudging}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass} ${
-                  !isJudging ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
+                  !isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
                 }`}
               >
                 <span className="flex items-center space-x-2">
-                  <Pause className="w-4 h-4 text-amber-600" />
+                  <Pause className="w-4 h-4 text-amber-500 group-hover:text-white" />
                   <span>Tạm dừng</span>
                 </span>
-                <span className="text-[11px] opacity-60 font-mono">F6</span>
+                <span className="text-[11px] opacity-60 font-mono">Pause</span>
               </button>
 
               <button
                 onClick={() => { onStopJudging(); setOpenMenu(null); }}
                 disabled={!isJudging}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass} ${
-                  !isJudging ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
+                  !isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
                 }`}
               >
                 <span className="flex items-center space-x-2">
-                  <Square className="w-4 h-4 text-rose-600 fill-rose-600" />
+                  <Square className="w-4 h-4 text-rose-500 group-hover:text-white" />
                   <span>Dừng chấm</span>
                 </span>
-                <span className="text-[11px] opacity-60 font-mono">F7</span>
+                <span className="text-[11px] opacity-60 font-mono">Escape</span>
               </button>
+
+              <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] my-1" />
 
               <button
                 onClick={() => { onRejudgeAll(); setOpenMenu(null); }}
-                disabled={isJudging}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass} ${
-                  isJudging ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <RotateCcw className="w-4 h-4 text-indigo-600" />
+                  <RotateCcw className="w-4 h-4 text-blue-500 group-hover:text-white" />
                   <span>Chấm lại toàn bộ</span>
-                </span>
-                <span className="text-[11px] opacity-60 font-mono">Ctrl+F9</span>
-              </button>
-
-              <div className="h-px bg-black/[0.06] my-1" />
-
-              {onOpenSelectiveJudging && (
-                <button
-                  onClick={() => { onOpenSelectiveJudging(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
-                >
-                  <Filter className="w-4 h-4 text-blue-600" />
-                  <span>Chấm có chọn lọc (Học sinh & Bài thi)...</span>
-                </button>
-              )}
-
-              {onClearScores && (
-                <button
-                  onClick={() => { onClearScores(); setOpenMenu(null); }}
-                  className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 text-rose-600 ${itemHoverClass}`}
-                >
-                  <Trash2 className="w-4 h-4 text-rose-600" />
-                  <span>Xóa toàn bộ điểm</span>
-                </button>
-              )}
-
-              <div className="h-px bg-black/[0.06] my-1" />
-
-              <button
-                onClick={() => { onExportExcel(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-              >
-                <span className="flex items-center space-x-2">
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-                  <span className="font-semibold text-emerald-900">Xuất kết quả ra Excel</span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">Shift+F9</span>
               </button>
 
+              {onClearScores && (
+                <button
+                  onClick={() => { onClearScores(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                >
+                  <span className="flex items-center space-x-2">
+                    <Trash2 className="w-4 h-4 text-rose-500 group-hover:text-white" />
+                    <span className="text-rose-600 dark:text-rose-400 group-hover:text-white">Xoá toàn bộ điểm</span>
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 3. Menu Quản lý */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('manage')}
+            onMouseEnter={() => handleMouseEnter('manage')}
+            className={menuBtnClass('manage')}
+          >
+            Quản lý
+          </button>
+          {openMenu === 'manage' && (
+            <div className={`${dropdownClass} w-64`}>
               <button
-                onClick={() => { onExportTXT(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                onClick={() => { onOpenTasksConfig(); setOpenMenu(null); }}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
-                <FileText className="w-4 h-4 text-neutral-500" />
-                <span>Xuất kết quả ra Text (.txt)</span>
+                <span className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-indigo-500 group-hover:text-white" />
+                  <span>Danh sách Đề thi & Test cases...</span>
+                </span>
+                <span className="text-[11px] opacity-60 font-mono">F4</span>
+              </button>
+
+              {onOpenStudentManager && (
+                <button
+                  onClick={() => { onOpenStudentManager(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                >
+                  <span className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-blue-500 group-hover:text-white" />
+                    <span>Danh sách Thí sinh...</span>
+                  </span>
+                  <span className="text-[11px] opacity-60 font-mono">F6</span>
+                </button>
+              )}
+
+              {onOpenSelectiveJudging && (
+                <button
+                  onClick={() => { onOpenSelectiveJudging(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                >
+                  <span className="flex items-center space-x-2">
+                    <Filter className="w-4 h-4 text-amber-500 group-hover:text-white" />
+                    <span>Chọn lọc bài thi & thí sinh cần chấm...</span>
+                  </span>
+                  <span className="text-[11px] opacity-60 font-mono">F7</span>
+                </button>
+              )}
+
+              <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] my-1" />
+
+              {onSelectAllTasks && (
+                <button
+                  onClick={() => { onSelectAllTasks(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <CheckSquare className="w-4 h-4 text-emerald-500 group-hover:text-white" />
+                  <span>Đánh dấu chọn tất cả bài thi</span>
+                </button>
+              )}
+
+              {onDeselectAllTasks && (
+                <button
+                  onClick={() => { onDeselectAllTasks(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <EmptySquare className="w-4 h-4 text-neutral-400 group-hover:text-white" />
+                  <span>Bỏ chọn tất cả bài thi</span>
+                </button>
+              )}
+
+              {onInvertTasks && (
+                <button
+                  onClick={() => { onInvertTasks(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <RotateCcw className="w-4 h-4 text-neutral-500 group-hover:text-white" />
+                  <span>Đảo dấu chọn bài thi</span>
+                </button>
+              )}
+
+              <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] my-1" />
+
+              {onSelectAllStudents && (
+                <button
+                  onClick={() => { onSelectAllStudents(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <CheckSquare className="w-4 h-4 text-emerald-500 group-hover:text-white" />
+                  <span>Đánh dấu chọn tất cả thí sinh</span>
+                </button>
+              )}
+
+              {onDeselectAllStudents && (
+                <button
+                  onClick={() => { onDeselectAllStudents(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <EmptySquare className="w-4 h-4 text-neutral-400 group-hover:text-white" />
+                  <span>Bỏ chọn tất cả thí sinh</span>
+                </button>
+              )}
+
+              {onInvertStudents && (
+                <button
+                  onClick={() => { onInvertStudents(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                >
+                  <RotateCcw className="w-4 h-4 text-neutral-500 group-hover:text-white" />
+                  <span>Đảo dấu chọn thí sinh</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Menu Kết quả & Báo cáo */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('export')}
+            onMouseEnter={() => handleMouseEnter('export')}
+            className={menuBtnClass('export')}
+          >
+            Kết quả
+          </button>
+          {openMenu === 'export' && (
+            <div className={`${dropdownClass} w-60`}>
+              <button
+                onClick={() => { onExportExcel(); setOpenMenu(null); }}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+              >
+                <span className="flex items-center space-x-2">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-500 group-hover:text-white" />
+                  <span>Xuất bảng điểm Excel (.xls)</span>
+                </span>
+                <span className="text-[11px] opacity-60 font-mono">F11</span>
               </button>
 
               <button
                 onClick={() => { onExportCSV(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
-                <FileSpreadsheet className="w-4 h-4 text-teal-600" />
-                <span>Xuất kết quả ra CSV (.csv)</span>
+                <span className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-blue-500 group-hover:text-white" />
+                  <span>Xuất bảng điểm CSV (.csv)</span>
+                </span>
+                <span className="text-[11px] opacity-60 font-mono">F12</span>
+              </button>
+
+              <button
+                onClick={() => { onExportTXT(); setOpenMenu(null); }}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+              >
+                <span className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-neutral-500 group-hover:text-white" />
+                  <span>Xuất bảng điểm Text (.txt)</span>
+                </span>
               </button>
             </div>
           )}
         </div>
 
-        {/* 5. Menu Thiết lập & Trợ giúp (H) */}
+        {/* 5. Menu Cấu hình & Trợ giúp */}
         <div className="relative">
-          <button onClick={() => handleMenuClick('help')} className={menuBtnClass('help')}>
-            Trợ giúp {isApple ? '' : '(H)'}
+          <button
+            onClick={() => handleMenuClick('help')}
+            onMouseEnter={() => handleMouseEnter('help')}
+            className={menuBtnClass('help')}
+          >
+            Trợ giúp
           </button>
           {openMenu === 'help' && (
-            <div className={`${dropdownClass} w-64`}>
-              <button
-                onClick={() => { onShowDocs?.(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
-              >
-                <span className="flex items-center space-x-2">
-                  <HelpCircle className="w-4 h-4 text-blue-600" />
-                  <span>Hướng dẫn sử dụng Themis</span>
-                </span>
-                <span className="text-[11px] opacity-60 font-mono">F1</span>
-              </button>
+            <div className={`${dropdownClass} w-56`}>
+              {onShowDocs && (
+                <button
+                  onClick={() => { onShowDocs(); setOpenMenu(null); }}
+                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                >
+                  <span className="flex items-center space-x-2">
+                    <HelpCircle className="w-4 h-4 text-blue-500 group-hover:text-white" />
+                    <span>Hướng dẫn sử dụng</span>
+                  </span>
+                  <span className="text-[11px] opacity-60 font-mono">F1</span>
+                </button>
+              )}
 
               <button
                 onClick={() => { onOpenSettings(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center justify-between ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${itemHoverClass}`}
               >
                 <span className="flex items-center space-x-2">
-                  <Settings className="w-4 h-4 text-neutral-600" />
-                  <span>Thiết lập môi trường (F11)</span>
+                  <Settings className="w-4 h-4 text-neutral-500 group-hover:text-white" />
+                  <span>Cấu hình máy chủ chấm...</span>
                 </span>
-                <span className="text-[11px] opacity-60 font-mono">F11</span>
+                <span className="text-[11px] opacity-60 font-mono">Ctrl+,</span>
               </button>
 
-              <div className="h-px bg-black/[0.06] my-1" />
+              <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] my-1" />
 
               <button
                 onClick={() => { onOpenAbout(); setOpenMenu(null); }}
-                className={`w-full text-left px-3.5 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
+                className={`w-full text-left px-3 py-1.5 flex items-center space-x-2 ${itemHoverClass}`}
               >
-                <HelpCircle className="w-4 h-4 text-[#0078D7]" />
-                <span>Thông tin về sản phẩm Themis...</span>
+                <HelpCircle className="w-4 h-4 text-amber-500 group-hover:text-white" />
+                <span>Giới thiệu Themis Web</span>
               </button>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </nav>
   );
 };

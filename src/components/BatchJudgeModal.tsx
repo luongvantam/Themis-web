@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Upload, Loader2, CheckCircle2, FileCode, Trash2, Users } from 'lucide-react';
+import { Play, Upload, Loader2, CheckCircle2, FileCode, Trash2, Users, X } from 'lucide-react';
 import { Contest, Submission, TestResult } from '../types';
 import { executeSingleTest } from '../services/judge0Service';
 import { parseThemisSubmissionFolder, parseThemisSubmissionZip, detectLanguageId } from '../utils/zipParser';
@@ -71,47 +71,45 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
     const newItems: QueuedSubmission[] = [];
 
     for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      if (f.name.endsWith('.zip')) {
-        const zipContent = await f.arrayBuffer();
-        const fromZip = await parseThemisSubmissionZip(zipContent);
-        fromZip.forEach((z) => {
+      const file = files[i];
+      if (file.name.endsWith('.zip')) {
+        const subsFromZip = await parseThemisSubmissionZip(file);
+        subsFromZip.forEach((item) => {
           newItems.push({
             id: `sub-${Date.now()}-${Math.random()}`,
-            contestantName: z.contestantName,
-            problemCode: z.problemCode,
-            languageId: z.languageId,
-            fileName: z.fileName,
-            sourceCode: z.sourceCode,
+            contestantName: item.contestantName,
+            problemCode: item.problemCode,
+            languageId: item.languageId,
+            fileName: item.fileName,
+            sourceCode: item.sourceCode,
             status: 'PENDING',
           });
         });
       } else {
-        // Individual code file
-        const sourceCode = await f.text();
-        const nameWithoutExt = f.name.substring(0, f.name.lastIndexOf('.')) || f.name;
+        const code = await file.text();
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
         let contestant = 'ThiSinh';
-        let problem = nameWithoutExt.toUpperCase();
+        let probCode = baseName;
 
-        const bracketMatch = nameWithoutExt.match(/^([^\[\]]+)\[([^\[\]]+)\]$/);
-        if (bracketMatch) {
-          contestant = bracketMatch[1].trim();
-          problem = bracketMatch[2].trim().toUpperCase();
-        } else {
-          const delimMatch = nameWithoutExt.match(/^([^_–-]+)[_–-]([^_–-]+)$/);
-          if (delimMatch) {
-            contestant = delimMatch[1].trim();
-            problem = delimMatch[2].trim().toUpperCase();
+        if (baseName.includes('[')) {
+          const match = baseName.match(/^(.*?)\[(.*?)\]$/);
+          if (match) {
+            contestant = match[1];
+            probCode = match[2];
           }
+        } else if (baseName.includes('_')) {
+          const parts = baseName.split('_');
+          contestant = parts[0];
+          probCode = parts.slice(1).join('_');
         }
 
         newItems.push({
           id: `sub-${Date.now()}-${Math.random()}`,
           contestantName: contestant,
-          problemCode: problem,
-          languageId: detectLanguageId(f.name),
-          fileName: f.name,
-          sourceCode,
+          problemCode: probCode.toUpperCase(),
+          languageId: detectLanguageId(file.name),
+          fileName: file.name,
+          sourceCode: code,
           status: 'PENDING',
         });
       }
@@ -122,23 +120,24 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
   };
 
   const handleSaveToContestPending = async () => {
-    if (queue.length === 0) return;
     for (const item of queue) {
-      const targetProb = contest.problems.find(
+      const targetProblem = contest.problems.find(
         (p) => p.code.toUpperCase() === item.problemCode.toUpperCase()
       );
+      if (!targetProblem) continue;
+
       const sub: Submission = {
         id: item.id,
         contestId: contest.id,
-        problemId: targetProb?.id || `prob-${item.problemCode}`,
-        problemCode: item.problemCode,
+        problemId: targetProblem.id,
+        problemCode: targetProblem.code,
         contestantName: item.contestantName,
         languageId: item.languageId,
         sourceCode: item.sourceCode,
         status: 'PENDING',
-        totalScore: 0,
-        maxScore: targetProb?.points || 10,
         testResults: [],
+        totalScore: 0,
+        maxScore: targetProblem.points,
         createdAt: Date.now(),
       };
       await storage.saveSubmission(sub);
@@ -150,7 +149,6 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
   const handleRunBatchJudge = async () => {
     if (queue.length === 0) return;
     setIsJudging(true);
-
     const settings = await storage.getSettings();
 
     for (let i = 0; i < queue.length; i++) {
@@ -174,7 +172,6 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
 
       try {
         const results: TestResult[] = [];
-
         for (const tc of targetProblem.testCases) {
           const res = await executeSingleTest({
             sourceCode: item.sourceCode,
@@ -221,39 +218,42 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
-      {/* Windows Dialog Frame */}
-      <div className="bg-[#ECE9D8] border-2 border-t-white border-l-white border-b-[#404040] border-r-[#404040] shadow-[2px_2px_10px_rgba(0,0,0,0.5)] max-w-3xl w-full flex flex-col max-h-[85vh] overflow-hidden text-xs font-sans">
-        {/* Windows Dialog Title Bar */}
-        <div className="bg-gradient-to-r from-[#0A246A] via-[#0055EA] to-[#A6CAF0] text-white h-7 px-2 flex items-center justify-between select-none shadow-sm">
-          <div className="flex items-center space-x-2">
-            <FileCode className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
-            <span className="font-bold text-[12px] tracking-wide">
-              Themis - Nạp bài thí sinh & Chấm bài hàng loạt
-            </span>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white/95 dark:bg-[#1E1E22]/95 backdrop-blur-2xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl max-w-3xl w-full flex flex-col max-h-[85vh] overflow-hidden text-xs font-sans text-neutral-800 dark:text-neutral-100 transition-colors">
+        {/* Title Bar */}
+        <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none shrink-0">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <FileCode className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm text-neutral-900 dark:text-white">
+                Nạp bài thí sinh & Chấm bài hàng loạt
+              </h3>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                {contest.title}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
             disabled={isJudging}
-            className="w-5 h-5 bg-[#ECE9D8] hover:bg-[#E81123] hover:text-white border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] text-black font-bold flex items-center justify-center text-[10px] shadow-[1px_1px_0_#000] transition"
+            className="w-7 h-7 rounded-full bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Dialog Content */}
-        <div className="p-3 space-y-3 flex flex-col flex-1 overflow-hidden">
+        <div className="p-4 space-y-3 flex flex-col flex-1 overflow-hidden">
           {/* Instructions box */}
-          <div className="p-2.5 bg-white border border-[#808080] win-border-inset text-[11px] text-slate-700 leading-relaxed">
-            <p>
-              Chọn <strong>thư mục bài làm học sinh</strong> (mỗi thư mục con là tên của một học sinh chứa các file code như <code>CHUYENDE.cpp</code>, <code>MAVE.pas</code>) hoặc chọn nhiều file bài nộp lẻ / file <code>.zip</code>.
-            </p>
+          <div className="p-3 bg-neutral-50/80 dark:bg-[#252529]/80 rounded-xl border border-black/[0.06] dark:border-white/[0.06] text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            Chọn <strong>thư mục bài làm học sinh</strong> (mỗi thư mục con là tên của một học sinh chứa các file code như <code>CHUYENDE.cpp</code>, <code>MAVE.pas</code>) hoặc chọn nhiều file bài nộp lẻ / file <code>.zip</code>.
           </div>
 
           {/* Action Button Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center space-x-2">
-              {/* Folder Input */}
               <input
                 type="file"
                 ref={folderInputRef}
@@ -263,13 +263,12 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
               <button
                 onClick={() => folderInputRef.current?.click()}
                 disabled={isJudging}
-                className="flex items-center space-x-1.5 px-3 py-1 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-[#003366] font-bold rounded-none shadow-[1px_1px_0_#404040] transition active:translate-y-px"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium rounded-xl text-xs shadow-sm transition active:scale-[0.98]"
               >
-                <Users className="w-3.5 h-3.5 text-[#0078D7]" />
+                <Users className="w-3.5 h-3.5" />
                 <span>Nạp thư mục học sinh...</span>
               </button>
 
-              {/* File Input */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -281,44 +280,44 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isJudging}
-                className="flex items-center space-x-1.5 px-3 py-1 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-slate-900 font-bold rounded-none shadow-[1px_1px_0_#404040] transition active:translate-y-px"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-black/[0.05] dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-neutral-700 dark:text-neutral-200 font-medium rounded-xl text-xs transition active:scale-[0.98]"
               >
-                <Upload className="w-3.5 h-3.5 text-indigo-700" />
+                <Upload className="w-3.5 h-3.5 text-blue-500" />
                 <span>Nạp file lẻ (.cpp, .pas, .zip)...</span>
               </button>
 
               {queue.length > 0 && !isJudging && (
                 <button
                   onClick={() => setQueue([])}
-                  className="flex items-center space-x-1 px-2 py-1 bg-[#ECE9D8] hover:bg-[#FFF5F5] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-rose-700 rounded-none text-[11px] font-semibold shadow-[1px_1px_0_#404040] transition active:translate-y-px"
+                  className="flex items-center space-x-1 px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-medium transition"
                 >
-                  <Trash2 className="w-3 h-3 text-rose-600" />
+                  <Trash2 className="w-3.5 h-3.5" />
                   <span>Xóa danh sách</span>
                 </button>
               )}
             </div>
 
-            <span className="text-slate-600 text-[11px]">
-              Đã nạp: <strong className="text-black">{queue.length}</strong> bài nộp
+            <span className="text-neutral-500 text-xs">
+              Đã nạp: <strong className="text-neutral-900 dark:text-white">{queue.length}</strong> bài nộp
             </span>
           </div>
 
           {/* Queued Files Table */}
-          <div className="flex-1 overflow-y-auto bg-white border border-[#808080] win-border-inset">
+          <div className="flex-1 overflow-y-auto rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#1A1A1E]">
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="sticky top-0 bg-[#ECE9D8] text-[#1E1E1E] font-semibold text-[11px] border-b border-[#B0B0B0]">
+              <thead className="sticky top-0 bg-neutral-50/90 dark:bg-[#242428]/90 backdrop-blur-md text-neutral-600 dark:text-neutral-400 font-medium text-[11px] border-b border-black/[0.06] dark:border-white/[0.06]">
                 <tr>
-                  <th className="py-1 px-2 w-10 text-center border-r border-[#D0D0D0]">STT</th>
-                  <th className="py-1 px-3 border-r border-[#D0D0D0]">Thí sinh (Tên folder)</th>
-                  <th className="py-1 px-2 text-center border-r border-[#D0D0D0]">Mã bài</th>
-                  <th className="py-1 px-3 border-r border-[#D0D0D0]">Tên file</th>
-                  <th className="py-1 px-2 text-right">Trạng thái / Điểm</th>
+                  <th className="py-2.5 px-3 w-12 text-center">STT</th>
+                  <th className="py-2.5 px-3">Thí sinh (Tên folder)</th>
+                  <th className="py-2.5 px-2 text-center">Mã bài</th>
+                  <th className="py-2.5 px-3">Tên file</th>
+                  <th className="py-2.5 px-3 text-right">Trạng thái / Điểm</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#EAEAEA] text-[12px]">
+              <tbody className="divide-y divide-black/[0.04] dark:divide-white/[0.04] text-[12px]">
                 {queue.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 italic">
+                    <td colSpan={5} className="py-10 text-center text-neutral-400 italic">
                       Chưa có bài thi nào. Bấm nút "Nạp thư mục học sinh..." ở trên để bắt đầu.
                     </td>
                   </tr>
@@ -328,42 +327,42 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
                       key={item.id}
                       className={
                         item.status === 'JUDGING'
-                          ? 'bg-[#FFF8E7]'
+                          ? 'bg-amber-50/60 dark:bg-amber-950/20'
                           : item.status === 'DONE'
-                          ? 'bg-[#F2FBF2]'
-                          : 'hover:bg-[#F8F9FA]'
+                          ? 'bg-emerald-50/40 dark:bg-emerald-950/20'
+                          : 'hover:bg-neutral-50/80 dark:hover:bg-white/[0.02]'
                       }
                     >
-                      <td className="py-1 px-2 text-center text-slate-500 font-mono text-[11px] border-r border-[#EAEAEA]">
+                      <td className="py-2 px-3 text-center text-neutral-400 font-mono text-[11px]">
                         {idx + 1}
                       </td>
-                      <td className="py-1 px-3 font-semibold text-black border-r border-[#EAEAEA]">
+                      <td className="py-2 px-3 font-semibold text-neutral-900 dark:text-white">
                         {item.contestantName}
                       </td>
-                      <td className="py-1 px-2 text-center font-mono font-bold text-[#003366] border-r border-[#EAEAEA]">
+                      <td className="py-2 px-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400">
                         {item.problemCode}
                       </td>
-                      <td className="py-1 px-3 font-mono text-slate-600 text-[11px] border-r border-[#EAEAEA]">
+                      <td className="py-2 px-3 font-mono text-neutral-500 text-[11px]">
                         {item.fileName}
                       </td>
-                      <td className="py-1 px-2 text-right font-mono">
+                      <td className="py-2 px-3 text-right font-mono">
                         {item.status === 'PENDING' && (
-                          <span className="text-slate-400 text-[11px]">Chờ chấm</span>
+                          <span className="text-neutral-400 text-[11px]">Chờ chấm</span>
                         )}
                         {item.status === 'JUDGING' && (
-                          <span className="text-amber-600 font-bold flex items-center justify-end space-x-1 text-[11px]">
+                          <span className="text-amber-600 font-medium flex items-center justify-end space-x-1 text-[11px]">
                             <Loader2 className="w-3 h-3 animate-spin" />
                             <span>Đang chấm...</span>
                           </span>
                         )}
                         {item.status === 'DONE' && (
-                          <span className="text-[#008000] font-bold flex items-center justify-end space-x-1">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-end space-x-1">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>{item.score?.toFixed(1)}đ</span>
                           </span>
                         )}
                         {item.status === 'ERROR' && (
-                          <span className="text-[#CC0000] font-bold text-[11px]">Lỗi</span>
+                          <span className="text-rose-600 font-bold text-[11px]">Lỗi</span>
                         )}
                       </td>
                     </tr>
@@ -374,11 +373,11 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
           </div>
 
           {/* Dialog Bottom Buttons */}
-          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#D0D0D0]">
+          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-black/[0.06] dark:border-white/[0.08]">
             <button
               onClick={onClose}
               disabled={isJudging}
-              className="px-4 py-1 bg-[#ECE9D8] hover:bg-[#F2F0E4] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-slate-900 rounded-none font-semibold shadow-[1px_1px_0_#404040] transition active:translate-y-px"
+              className="px-4 py-2 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-200 rounded-xl font-medium transition text-xs"
             >
               Đóng
             </button>
@@ -387,19 +386,19 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
               onClick={handleSaveToContestPending}
               disabled={isJudging || queue.length === 0}
               title="Đưa các bài nộp vào danh sách kỳ thi ở trạng thái Chờ chấm (F9 để chấm)"
-              className="flex items-center space-x-1.5 px-3 py-1 bg-[#ECE9D8] hover:bg-[#F5F4EB] active:bg-[#ECE9D8] border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white text-[#004080] font-bold rounded-none shadow-[1px_1px_0_#404040] transition active:translate-y-px disabled:opacity-50"
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 font-medium rounded-xl text-xs transition disabled:opacity-40"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />
-              <span>Nạp vào kỳ thi (Chờ chấm - F9)</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+              <span>Nạp vào kỳ thi (Chờ chấm)</span>
             </button>
 
             <button
               onClick={handleRunBatchJudge}
               disabled={isJudging || queue.length === 0}
-              className={`flex items-center space-x-1 px-4 py-1 rounded-none font-bold shadow-[1px_1px_0_#404040] transition border-t border-l border-white border-b border-r border-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white active:translate-y-px ${
+              className={`flex items-center space-x-1.5 px-5 py-2 rounded-xl text-xs font-semibold text-white transition shadow-sm ${
                 isJudging || queue.length === 0
-                  ? 'bg-[#ECE9D8] text-slate-400 opacity-50 cursor-not-allowed'
-                  : 'bg-[#EBF7EB] hover:bg-[#DCF3DC] text-[#006600]'
+                  ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50'
+                  : 'bg-[#0071E3] hover:bg-[#0077ED] active:scale-[0.98]'
               }`}
             >
               {isJudging ? (
@@ -410,7 +409,7 @@ export const BatchJudgeModal: React.FC<BatchJudgeModalProps> = ({
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Bắt đầu chấm tất cả ({queue.length} bài)</span>
+                  <span>Chấm tất cả ({queue.length} bài)</span>
                 </>
               )}
             </button>

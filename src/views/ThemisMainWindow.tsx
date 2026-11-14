@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Table2, BookOpen } from 'lucide-react';
-import { Contest, Submission, UITheme } from '../types';
+import { Contest, Submission } from '../types';
+import { useColorMode } from '../utils/useColorMode';
 import { ThemisWindowTitleBar } from '../components/ThemisWindowTitleBar';
 import { ThemisMenuBar } from '../components/ThemisMenuBar';
 import { ThemisToolbar } from '../components/ThemisToolbar';
@@ -65,14 +66,7 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   const [selectedProblemForEdit, setSelectedProblemForEdit] = useState<string | null>(null);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState<'scoreboard' | 'docs'>('scoreboard');
-  const [uiTheme, setUiTheme] = useState<UITheme>(
-    () => (localStorage.getItem('themis_ui_theme') as UITheme) || 'apple'
-  );
-
-  const handleToggleTheme = (newTheme: UITheme) => {
-    setUiTheme(newTheme);
-    localStorage.setItem('themis_ui_theme', newTheme);
-  };
+  const { colorMode, setColorMode } = useColorMode();
 
   // Selective judging filters: By default all problems and all students are selected (ticked)
   const [selectedStudentNames, setSelectedStudentNames] = useState<Set<string>>(new Set());
@@ -1076,25 +1070,18 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
   };
 
   return (
-    <div
-      className={`flex flex-col h-screen w-screen select-none font-sans overflow-hidden transition-colors ${
-        uiTheme === 'apple'
-          ? 'bg-[#F5F5F7] text-neutral-900 antialiased'
-          : 'bg-[#ECE9D8] text-slate-800'
-      }`}
-    >
+    <div className="flex flex-col h-screen w-screen select-none font-sans overflow-hidden transition-colors bg-[#F5F5F7] dark:bg-[#121214] text-neutral-900 dark:text-neutral-100 antialiased">
       {/* 1. Title Bar */}
       <ThemisWindowTitleBar
         title={activeContest?.title || ''}
-        theme={uiTheme}
-        onToggleTheme={handleToggleTheme}
+        colorMode={colorMode}
+        onSetColorMode={setColorMode}
       />
 
       {/* 2. Menu Bar */}
       <ThemisMenuBar
         contestTitle={activeContest?.title || ''}
         isJudging={isJudging}
-        theme={uiTheme}
         onNewContest={onNewContest}
         onOpenTaskFolder={() => taskFolderInputRef.current?.click()}
         onOpenZip={() => zipInputRef.current?.click()}
@@ -1129,7 +1116,6 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         isJudging={isJudging}
         isSelectiveJudging={isSelectiveJudging}
         selectedSubmissionsCount={targetSubmissionsToJudge.length}
-        theme={uiTheme}
         onOpenSelectiveModal={() => setShowSelectiveModal(true)}
         onStartJudging={handleStartJudging}
         onPauseJudging={() => setIsPaused(!isPaused)}
@@ -1186,65 +1172,36 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       />
 
       {/* 4. Tab Bar (Bảng điểm / Hướng dẫn F1) */}
-      {uiTheme === 'apple' ? (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-white/60 dark:bg-[#1A1A1E]/60 backdrop-blur-md border-b border-black/[0.06] select-none text-[12px]">
-          <div className="inline-flex p-0.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-lg">
-            <button
-              onClick={() => setMainTab('scoreboard')}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
-                mainTab === 'scoreboard'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900'
-              }`}
-            >
-              <Table2 className="w-3.5 h-3.5" />
-              <span>Bảng điểm (F5)</span>
-            </button>
-            <button
-              onClick={() => setMainTab('docs')}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
-                mainTab === 'docs'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Hướng dẫn sử dụng (F1)</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center space-x-1 px-2 pt-1 bg-[#ECE9D8] border-b border-[#919B9C] select-none text-[12px]">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-white/60 dark:bg-[#18181B]/60 backdrop-blur-md border-b border-black/[0.06] dark:border-white/[0.08] select-none text-[12px] transition-colors">
+        <div className="inline-flex p-0.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-xl">
           <button
             onClick={() => setMainTab('scoreboard')}
-            className={`px-4 py-1 font-sans rounded-t-sm transition ${
+            className={`flex items-center space-x-1.5 px-3.5 py-1 rounded-lg text-[12px] font-medium transition-all ${
               mainTab === 'scoreboard'
-                ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
-                : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
+                ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-sm font-semibold'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
             }`}
           >
-            Bảng điểm
+            <Table2 className="w-3.5 h-3.5" />
+            <span>Bảng điểm (F5)</span>
           </button>
           <button
             onClick={() => setMainTab('docs')}
-            className={`px-4 py-1 font-sans rounded-t-sm transition ${
+            className={`flex items-center space-x-1.5 px-3.5 py-1 rounded-lg text-[12px] font-medium transition-all ${
               mainTab === 'docs'
-                ? 'bg-[#ECE9D8] border-t-2 border-l border-r border-t-white border-l-white border-r-[#808080] text-black font-bold -mb-[1px] pb-1.5 shadow-[0_-1px_0_white]'
-                : 'bg-[#D8D4C4] border-t border-l border-r border-t-white border-l-white border-r-[#808080] text-slate-700 hover:bg-[#E2DED0]'
+                ? 'bg-white dark:bg-[#2C2C2E] text-neutral-900 dark:text-white shadow-sm font-semibold'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
             }`}
           >
-            Hướng dẫn (F1)
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Hướng dẫn sử dụng (F1)</span>
           </button>
         </div>
-      )}
+      </div>
 
       {mainTab === 'scoreboard' ? (
         /* Work Area: Scoreboard DataGridView + Log Console */
-        <div
-          className={`flex-1 flex flex-col p-2 space-y-2 overflow-hidden min-h-0 ${
-            uiTheme === 'apple' ? 'bg-[#F5F5F7]' : 'bg-[#F0F0F0] p-1.5 space-y-1.5'
-          }`}
-        >
+        <div className="flex-1 flex flex-col p-2 space-y-2 overflow-hidden min-h-0 bg-[#F5F5F7] dark:bg-[#121214] transition-colors">
           {/* Top: Scoreboard DataGridView */}
           <div className="flex-[3] min-h-[180px] overflow-hidden">
             <ThemisScoreboardGrid
@@ -1252,7 +1209,6 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
               submissions={submissions}
               selectedStudentNames={selectedStudentNames}
               selectedProblemCodes={selectedProblemCodes}
-              theme={uiTheme}
               onToggleStudent={handleToggleStudent}
               onToggleAllStudents={handleToggleAllStudents}
               onToggleProblem={handleToggleProblem}
@@ -1273,41 +1229,25 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
           </div>
 
           {/* Splitter bar */}
-          <div
-            className={`cursor-row-resize select-none shrink-0 transition-colors ${
-              uiTheme === 'apple'
-                ? 'h-1.5 flex items-center justify-center group'
-                : 'h-1 bg-[#D0D0D0] hover:bg-[#0078D7] border-t border-b border-[#B8B8B8]'
-            }`}
-          >
-            {uiTheme === 'apple' && (
-              <div className="w-12 h-1 rounded-full bg-black/15 group-hover:bg-[#0071E3] transition-colors" />
-            )}
+          <div className="h-1.5 flex items-center justify-center cursor-row-resize select-none shrink-0 group">
+            <div className="w-12 h-1 rounded-full bg-black/15 dark:bg-white/20 group-hover:bg-[#0071E3] transition-colors" />
           </div>
 
           {/* Bottom: Log Console */}
           <div className="flex-[2] min-h-[130px] overflow-hidden">
-            <ThemisLogConsole logs={logs} theme={uiTheme} onClearLogs={() => setLogs([])} />
+            <ThemisLogConsole logs={logs} onClearLogs={() => setLogs([])} />
           </div>
         </div>
       ) : (
         /* Docs Area */
-        <div
-          className={`flex-1 overflow-hidden p-3 flex flex-col ${
-            uiTheme === 'apple' ? 'bg-[#F5F5F7]' : 'bg-white p-2'
-          }`}
-        >
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/10 text-xs">
-            <span className="font-semibold text-neutral-800">Tài liệu hướng dẫn Themis</span>
+        <div className="flex-1 overflow-hidden p-3 flex flex-col bg-[#F5F5F7] dark:bg-[#121214] transition-colors">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/[0.06] dark:border-white/[0.08] text-xs">
+            <span className="font-semibold text-neutral-800 dark:text-neutral-200">Tài liệu hướng dẫn Themis</span>
           </div>
           <iframe
             src="/docs/themis.html"
             title="Themis Documentation"
-            className={`w-full flex-1 bg-white ${
-              uiTheme === 'apple'
-                ? 'rounded-xl border border-black/10 shadow-sm'
-                : 'border border-[#D0D0D0] rounded-sm'
-            }`}
+            className="w-full flex-1 bg-white rounded-xl border border-black/10 dark:border-white/10 shadow-sm"
           />
         </div>
       )}
@@ -1319,27 +1259,26 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         progressPercent={progressPercent}
         totalSubmissions={submissions.length}
         totalProblems={activeContest?.problems.length || 0}
-        theme={uiTheme}
       />
 
       {/* Modals & Dialogs */}
       {/* Tasks Management Dialog */}
       {showTasksModal && activeContest && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
-          <div className="bg-[#F0F0F0] border-2 border-[#005A9E] rounded-t-sm shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden text-xs">
-            <div className="bg-gradient-to-r from-[#005A9E] via-[#0078D7] to-[#1084D9] text-white h-7 px-2 flex items-center justify-between select-none">
-              <span className="font-semibold text-[12px]">Themis - Cấu hình danh sách bài thi & Test Cases</span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white/95 dark:bg-[#1E1E22]/95 backdrop-blur-2xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden text-xs font-sans transition-colors">
+            <div className="px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between select-none">
+              <span className="font-semibold text-sm text-neutral-900 dark:text-white">Themis - Cấu hình danh sách bài thi & Test Cases</span>
               <button
                 onClick={() => {
                   setShowTasksModal(false);
                   setSelectedProblemForEdit(null);
                 }}
-                className="w-6 h-5 hover:bg-[#E81123] hover:text-white flex items-center justify-center text-slate-200 transition"
+                className="w-7 h-7 rounded-full bg-black/[0.05] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
                 ✕
               </button>
             </div>
-            <div className="p-4 overflow-y-auto flex-1 bg-[#F5F6F7]">
+            <div className="p-4 overflow-y-auto flex-1 bg-[#F5F5F7] dark:bg-[#161618]">
               <AdminProblemManager
                 contest={activeContest}
                 initialProblemCode={selectedProblemForEdit}
@@ -1386,7 +1325,6 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         isOpen={showStudentManagerModal}
         contest={activeContest}
         submissions={submissions}
-        theme={uiTheme}
         initialStudentName={selectedStudentForEdit}
         onClose={() => {
           setShowStudentManagerModal(false);
@@ -1432,7 +1370,6 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       {/* About Dialog */}
       <ThemisAboutModal
         isOpen={showAboutModal}
-        theme={uiTheme}
         onClose={() => setShowAboutModal(false)}
       />
     </div>
