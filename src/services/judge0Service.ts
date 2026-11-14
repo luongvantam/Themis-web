@@ -291,32 +291,199 @@ export interface BatchGradingOptions {
 }
 
 /**
- * High-performance concurrent test executor:
- * 1. Checks for empty/missing source code immediately.
- * 2. Runs Test 1 first. If Test 1 fails with CE (Compilation Error),
- *    short-circuits immediately and marks all remaining tests as CE (saving ~95% of time!).
- * 3. Runs remaining tests with a concurrency worker pool (default 4 parallel workers).
+ * Batch test executor using Judge0's official Batch Submissions API:
+ * 1. Preprocesses code once.
+ * 2. Packages all test cases into a single POST /submissions/batch payload.
+ * 3. Sends 1 single request to Judge0, dispatching all test runs in parallel on server workers.
+ * 4. Polls /submissions/batch every 400ms for status updates and invokes onProgress.
+ * Returns null if batch mode is not supported on the target Judge0 endpoint, triggering automatic fallback.
  */
-export async function executeSubmissionTests(opts: BatchGradingOptions): Promise<TestResult[]> {
-  const { sourceCode, languageId, problem, settings, concurrency = 4, onProgress, shouldStop } = opts;
+async function executeBatchTests(opts: BatchGradingOptions): Promise<TestResult[] | null> {
+  const { sourceCode, languageId, problem, settings, onProgress, shouldStop } = opts;
   const testCases = problem.testCases;
 
-  if (testCases.length === 0) return [];
+  const processedCode = preprocessCode(
+    sourceCode,
+    SUPPORTED_LANGUAGES.find((l) => l.id === languageId)?.name || 'cpp',
+    settings.autoRedirectFreopen
+  );
 
-  // Short-circuit: Check if code is empty
-  if (!sourceCode || !sourceCode.trim()) {
-    return testCases.map((tc) => ({
-      testCaseId: tc.id,
-      testCaseName: tc.name,
-      verdict: 'CE',
-      timeUsedMs: 0,
-      memoryUsedKb: 0,
-      score: 0,
-      maxScore: tc.score,
-      compileOutput: 'Tập tin bài làm không có nội dung (file rỗng hoặc chưa nộp).',
-      statusDescription: 'File rỗng (Empty file)',
-    }));
+  const sourceCodeB64 = utf8ToBase64(processedCode);
+
+  const batchPayload = {
+    action: 'create_batch',
+    judge0Url: settings.judge0Url,
+    judge0Key: settings.judge0Key,
+    submissions: testCases.map((tc) => ({
+      source_code: sourceCodeB64,
+      language_id: languageId,
+      stdin: utf8ToBase64(tc.input || ''),
+      is_base64: true,
+      cpu_time_limit: problem.timeLimitMs,
+      memory_limit: problem.memoryLimitMb,
+    })),
+  };
+
+  const targetUrl = settings.judge0Url.replace(/\/+$/, '');
+  const directHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (settings.judge0Key) {
+    if (targetUrl.includes('rapidapi.com')) {
+      directHeaders['X-RapidAPI-Key'] = settings.judge0Key;
+      directHeaders['X-RapidAPI-Host'] = 'judge0-ce.p.rapidapi.com';
+    } else {
+      directHeaders['X-Auth-Token'] = settings.judge0Key;
+    }
   }
+
+  let tokenList: string[] = [];
+  let useProxy = true;
+
+  try {
+    let res = await fetch('/api/judge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(batchPayload),
+    }).catch(() => null);
+
+    if (!res || res.status === 404) {
+      useProxy = false;
+      res = await fetch(`${targetUrl}/submissions/batch?base64_encoded=true`, {
+        method: 'POST',
+        headers: directHeaders,
+        body: JSON.stringify({
+          submissions: batchPayload.submissions,
+        }),
+      });
+    }
+
+    if (!res.ok) {
+      return null; // Endpoint doesn't support batch or returned error -> trigger fallback
+    }
+
+    const tokensData = await res.json();
+    if (!Array.isArray(tokensData) || tokensData.length !== testCases.length) {
+      return null;
+    }
+
+    tokenList = tokensData.map((t: any) => t.token);
+  } catch {
+    return null; // Network failure -> trigger fallback
+  }
+
+  // 2. Poll for batch results
+  const maxWaitMs = Math.max(15000, (problem.timeLimitMs || 1000) * 3 + 6000);
+  const startTime = Date.now();
+  const resultMap = new Map<string, TestResult>();
+  let lastReportedCount = 0;
+
+  while (Date.now() - startTime < maxWaitMs) {
+    if (shouldStop?.()) break;
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    let pollData: any = null;
+    if (useProxy) {
+      const pollRes = await fetch('/api/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'poll_batch',
+          judge0Url: settings.judge0Url,
+          judge0Key: settings.judge0Key,
+          tokens: tokenList,
+        }),
+      }).catch(() => null);
+      if (pollRes && pollRes.ok) {
+        pollData = await pollRes.json();
+      }
+    } else {
+      const pollUrl = `${targetUrl}/submissions/batch?tokens=${encodeURIComponent(
+        tokenList.join(',')
+      )}&base64_encoded=true&fields=token,status,time,memory,stdout,stderr,compile_output,message`;
+      const pollRes = await fetch(pollUrl, { headers: directHeaders }).catch(() => null);
+      if (pollRes && pollRes.ok) {
+        pollData = await pollRes.json();
+      }
+    }
+
+    if (!pollData || !Array.isArray(pollData.submissions)) {
+      continue;
+    }
+
+    let allDone = true;
+    for (let i = 0; i < pollData.submissions.length; i++) {
+      const sub = pollData.submissions[i];
+      const tc = testCases[i];
+      const statusId = sub.status?.id ?? 1;
+
+      // Status 1 = In Queue, 2 = Processing
+      if (statusId <= 2) {
+        allDone = false;
+        continue;
+      }
+
+      if (!resultMap.has(sub.token)) {
+        let verdict = mapJudge0StatusToVerdict(statusId);
+        const stdout = sub.is_decoded ? sub.stdout || '' : base64ToUtf8(sub.stdout);
+        const stderr = sub.is_decoded ? sub.stderr || '' : base64ToUtf8(sub.stderr);
+        const compileOutput = sub.is_decoded ? sub.compile_output || '' : base64ToUtf8(sub.compile_output);
+        const timeUsedMs = Math.round((parseFloat(sub.time) || 0) * 1000);
+        const memoryUsedKb = Math.round(parseFloat(sub.memory) || 0);
+
+        if (statusId === 3 || statusId === 4) {
+          const compRes = compareOutput(stdout, tc.output, { floatEpsilon: settings.floatEpsilon });
+          verdict = compRes.matches ? 'AC' : 'WA';
+        }
+
+        const score = verdict === 'AC' ? tc.score : 0;
+        const statusDesc = getStatusDescriptionVi(statusId, sub.status?.description);
+
+        const testRes: TestResult = {
+          testCaseId: tc.id,
+          testCaseName: tc.name,
+          verdict,
+          timeUsedMs,
+          memoryUsedKb,
+          score,
+          maxScore: tc.score,
+          stdout,
+          stderr,
+          compileOutput,
+          statusDescription: statusDesc,
+        };
+
+        resultMap.set(sub.token, testRes);
+      }
+    }
+
+    if (resultMap.size > lastReportedCount) {
+      lastReportedCount = resultMap.size;
+      const lastToken = tokenList[lastReportedCount - 1];
+      const lastRes = resultMap.get(lastToken) || Array.from(resultMap.values()).pop()!;
+      onProgress?.(lastReportedCount, testCases.length, lastRes);
+    }
+
+    if (allDone || resultMap.size === testCases.length) {
+      break;
+    }
+  }
+
+  if (resultMap.size === testCases.length) {
+    return tokenList.map((token) => resultMap.get(token)!);
+  }
+
+  return null;
+}
+
+/**
+ * Fallback worker pool:
+ * 1. Runs Test 1 first to check compilation.
+ * 2. If Test 1 fails with CE, short-circuits remaining tests in 0ms.
+ * 3. Runs remaining tests in parallel workers.
+ */
+async function executeWorkerPoolTests(opts: BatchGradingOptions): Promise<TestResult[]> {
+  const { sourceCode, languageId, problem, settings, concurrency = 4, onProgress, shouldStop } = opts;
+  const testCases = problem.testCases;
 
   // 1. Run Test 1 first to check compilation
   const firstRes = await executeSingleTest({
@@ -329,8 +496,6 @@ export async function executeSubmissionTests(opts: BatchGradingOptions): Promise
 
   onProgress?.(1, testCases.length, firstRes);
 
-  // If Test 1 resulted in Compilation Error (CE), all other tests will fail too!
-  // Short-circuit immediately to avoid wasting time!
   if (firstRes.verdict === 'CE') {
     const results: TestResult[] = [firstRes];
     for (let i = 1; i < testCases.length; i++) {
@@ -354,7 +519,6 @@ export async function executeSubmissionTests(opts: BatchGradingOptions): Promise
     return [firstRes];
   }
 
-  // 2. Run remaining tests in parallel with concurrency pool
   const results: TestResult[] = new Array(testCases.length);
   results[0] = firstRes;
 
@@ -388,4 +552,58 @@ export async function executeSubmissionTests(opts: BatchGradingOptions): Promise
   await Promise.all(workers);
 
   return results;
+}
+
+/**
+ * Main submission test executor:
+ * - Empty code short-circuit.
+ * - Single test optimization.
+ * - Batch submission mode (gộp toàn bộ test cases gửi 1 lượt qua POST /submissions/batch).
+ * - Automatic worker pool fallback if batch mode is unavailable.
+ */
+export async function executeSubmissionTests(opts: BatchGradingOptions): Promise<TestResult[]> {
+  const { sourceCode, languageId, problem, settings, onProgress } = opts;
+  const testCases = problem.testCases;
+
+  if (testCases.length === 0) return [];
+
+  // Short-circuit: Check if code is empty
+  if (!sourceCode || !sourceCode.trim()) {
+    return testCases.map((tc) => ({
+      testCaseId: tc.id,
+      testCaseName: tc.name,
+      verdict: 'CE',
+      timeUsedMs: 0,
+      memoryUsedKb: 0,
+      score: 0,
+      maxScore: tc.score,
+      compileOutput: 'Tập tin bài làm không có nội dung (file rỗng hoặc chưa nộp).',
+      statusDescription: 'File rỗng (Empty file)',
+    }));
+  }
+
+  if (testCases.length === 1) {
+    const singleRes = await executeSingleTest({
+      sourceCode,
+      languageId,
+      problem,
+      testCase: testCases[0],
+      settings,
+    });
+    onProgress?.(1, 1, singleRes);
+    return [singleRes];
+  }
+
+  // Multi-test: Try Judge0 Batch Submissions first (gộp 20 test gửi 1 lượt)
+  try {
+    const batchResults = await executeBatchTests(opts);
+    if (batchResults && batchResults.length === testCases.length) {
+      return batchResults;
+    }
+  } catch (err) {
+    console.warn('Batch submission attempt encountered error, falling back to concurrent pool:', err);
+  }
+
+  // Graceful fallback to concurrent worker pool
+  return executeWorkerPoolTests(opts);
 }
