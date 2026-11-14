@@ -447,7 +447,11 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
         } else if (e.shiftKey) {
           handleExportExcel();
         } else {
-          handleStartJudging();
+          if (isJudging) {
+            setShowJudgingHUD((prev) => !prev);
+          } else {
+            handleStartJudging();
+          }
         }
       } else if (e.key === 'F10' || e.key === 'F11') {
         e.preventDefault();
@@ -1168,6 +1172,8 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       <ThemisMenuBar
         contestTitle={activeContest?.title || ''}
         isJudging={isJudging}
+        isHUDOpen={showJudgingHUD}
+        onOpenJudgingHUD={() => setShowJudgingHUD(true)}
         onNewContest={onNewContest}
         onOpenTaskFolder={() => taskFolderInputRef.current?.click()}
         onOpenZip={() => zipInputRef.current?.click()}
@@ -1200,6 +1206,8 @@ export const ThemisMainWindow: React.FC<ThemisMainWindowProps> = ({
       {/* 3. Toolbar */}
       <ThemisToolbar
         isJudging={isJudging}
+        isHUDOpen={showJudgingHUD}
+        onOpenJudgingHUD={() => setShowJudgingHUD(true)}
         isSelectiveJudging={isSelectiveJudging}
         selectedSubmissionsCount={targetSubmissionsToJudge.length}
         onOpenSelectiveModal={() => setShowSelectiveModal(true)}

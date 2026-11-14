@@ -47,3 +47,4 @@ export function useColorMode() {
 
   return { colorMode, setColorMode: setMode, isDark: resolvedDark };
 }
+

@@ -7,6 +7,8 @@ import {
 
 interface ThemisToolbarProps {
   isJudging: boolean;
+  isHUDOpen?: boolean;
+  onOpenJudgingHUD?: () => void;
   isSelectiveJudging?: boolean;
   selectedSubmissionsCount?: number;
   onOpenSelectiveModal?: () => void;
@@ -30,6 +32,8 @@ interface ThemisToolbarProps {
 
 export const ThemisToolbar: React.FC<ThemisToolbarProps> = ({
   isJudging,
+  isHUDOpen,
+  onOpenJudgingHUD,
   isSelectiveJudging,
   selectedSubmissionsCount,
   onOpenSelectiveModal,
@@ -157,27 +161,36 @@ export const ThemisToolbar: React.FC<ThemisToolbarProps> = ({
 
         {/* GROUP 4: CHẤM BÀI (PRIMARY ACTION) */}
         <div className="flex items-center space-x-1.5 pl-1">
-          <button
-            onClick={onStartJudging}
-            disabled={isJudging}
-            title={isSelectiveJudging ? `Chấm có chọn lọc: ${selectedSubmissionsCount ?? 0} bài nộp (F9)` : 'Bắt đầu chấm bài (F9)'}
-            className={`flex items-center space-x-2 px-4 py-1.5 rounded-xl font-semibold text-[11px] shadow-sm transition-all active:scale-[0.98] ${
-              isJudging
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed opacity-60'
-                : isSelectiveJudging
-                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
-                : 'bg-[#0071E3] hover:bg-[#0077ED] text-white shadow-blue-500/20'
-            }`}
-          >
-            {isJudging ? (
+          {isJudging ? (
+            <button
+              onClick={onOpenJudgingHUD}
+              disabled={isHUDOpen}
+              title={isHUDOpen ? 'Đang hiển thị tiến trình chấm bài' : 'Mở xem tiến trình chấm bài (F9)'}
+              className={`flex items-center space-x-2 px-4 py-1.5 rounded-xl font-semibold text-[11px] shadow-sm transition-all active:scale-[0.98] ${
+                isHUDOpen
+                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed opacity-60'
+                  : 'bg-[#0071E3] hover:bg-[#0077ED] text-white shadow-blue-500/20'
+              }`}
+            >
               <div className="w-3.5 h-3.5 border-2 border-white/60 border-t-white rounded-full animate-spin" />
-            ) : (
+              <span>{isHUDOpen ? 'Đang chấm bài...' : 'Xem tiến trình chấm (F9)'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={onStartJudging}
+              title={isSelectiveJudging ? `Chấm có chọn lọc: ${selectedSubmissionsCount ?? 0} bài nộp (F9)` : 'Bắt đầu chấm bài (F9)'}
+              className={`flex items-center space-x-2 px-4 py-1.5 rounded-xl font-semibold text-[11px] shadow-sm transition-all active:scale-[0.98] ${
+                isSelectiveJudging
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
+                  : 'bg-[#0071E3] hover:bg-[#0077ED] text-white shadow-blue-500/20'
+              }`}
+            >
               <Play className="w-3.5 h-3.5 fill-white" />
-            )}
-            <span>
-              {isSelectiveJudging ? `Chấm chọn lọc (${selectedSubmissionsCount ?? 0})` : 'Chấm bài (F9)'}
-            </span>
-          </button>
+              <span>
+                {isSelectiveJudging ? `Chấm chọn lọc (${selectedSubmissionsCount ?? 0})` : 'Chấm bài (F9)'}
+              </span>
+            </button>
+          )}
 
           {/* Pause */}
           <button

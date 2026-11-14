@@ -131,13 +131,13 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
       </div>
 
       {/* Table Area */}
-      <div className="flex-1 overflow-auto bg-white dark:bg-[#1A1A1E] transition-colors">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="flex-1 overflow-auto bg-white dark:bg-[#1A1A1E] transition-colors p-1.5">
+        <table className="w-full text-left text-xs border-collapse border border-neutral-300 dark:border-neutral-700">
           {/* Column Header */}
           <thead className="sticky top-0 z-10 select-none shadow-sm font-semibold">
-            <tr className="bg-neutral-50/90 dark:bg-[#242428]/95 text-[11px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wider border-b border-black/[0.06] dark:border-white/[0.08] backdrop-blur-md">
+            <tr className="bg-neutral-100 dark:bg-[#242428] text-[11px] text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">
               {/* STT Header */}
-              <th className="py-2.5 px-2 w-14 text-center border-b border-black/[0.06] dark:border-white/[0.08]">
+              <th className="py-2.5 px-2 w-14 text-center border-r border-b border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#242428]">
                 <div className="flex items-center justify-center space-x-1">
                   {onToggleAllStudents && (
                     <input
@@ -156,7 +156,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
               </th>
 
               {/* Thí sinh Header */}
-              <th className="py-2.5 px-4 border-b border-black/[0.06] dark:border-white/[0.08] min-w-[180px]">
+              <th className="py-2.5 px-4 border-r border-b border-neutral-300 dark:border-neutral-700 min-w-[180px] bg-neutral-100 dark:bg-[#242428]">
                 Thí sinh
               </th>
 
@@ -166,7 +166,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                 return (
                   <th
                     key={p.id}
-                    className={`py-2.5 px-2 text-center border-b border-black/[0.06] dark:border-white/[0.08] min-w-[95px] transition-opacity ${
+                    className={`py-2.5 px-2 text-center border-r border-b border-neutral-300 dark:border-neutral-700 min-w-[95px] bg-neutral-100 dark:bg-[#242428] transition-opacity ${
                       !isProbChecked ? 'opacity-40' : ''
                     }`}
                   >
@@ -195,7 +195,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                     <div
                       onClick={() => onOpenProblemConfig?.(p.code)}
                       title={`Bấm vào để cấu hình, chỉnh sửa bài ${p.code}`}
-                      className="text-[10px] text-neutral-400 dark:text-neutral-500 font-normal cursor-pointer hover:underline"
+                      className="text-[10px] text-neutral-500 dark:text-neutral-400 font-normal cursor-pointer hover:underline"
                     >
                       ({p.points}đ)
                       {!isProbChecked && <span className="ml-1 text-rose-500 font-medium">(tắt)</span>}
@@ -205,19 +205,19 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
               })}
 
               {/* Tổng điểm Header */}
-              <th className="py-2.5 px-4 text-right border-b border-black/[0.06] dark:border-white/[0.08] min-w-[100px]">
+              <th className="py-2.5 px-4 text-right border-b border-neutral-300 dark:border-neutral-700 min-w-[100px] bg-neutral-100 dark:bg-[#242428]">
                 Tổng điểm
               </th>
             </tr>
           </thead>
 
           {/* Table Body */}
-          <tbody className="text-[12px] font-sans divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+          <tbody className="text-[12px] font-sans">
             {filtered.length === 0 ? (
               <tr>
                 <td
                   colSpan={contest.problems.length + 3}
-                  className="py-12 text-center text-neutral-400 text-xs italic bg-white dark:bg-[#1A1A1E]"
+                  className="py-12 text-center text-neutral-400 text-xs italic bg-white dark:bg-[#1A1A1E] border-b border-neutral-200 dark:border-neutral-800"
                 >
                   {rows.length === 0
                     ? 'Chưa có dữ liệu bài nộp. Hãy bấm "Nạp Thí sinh" hoặc "Bắt đầu chấm".'
@@ -242,7 +242,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                     }`}
                   >
                     {/* STT with Checkbox */}
-                    <td className="py-2.5 px-2 text-center text-neutral-400 dark:text-neutral-500 font-mono text-[11px]">
+                    <td className="py-2.5 px-2 text-center text-neutral-500 dark:text-neutral-400 font-mono text-[11px] border-r border-b border-neutral-200 dark:border-neutral-800">
                       <div className="flex items-center justify-center space-x-1">
                         {onToggleStudent && (
                           <input
@@ -268,7 +268,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                         onOpenStudentManager?.(row.contestantName);
                       }}
                       title={`Bấm vào để mở bảng quản lý / sửa thông tin thí sinh "${row.contestantName}"`}
-                      className="py-2.5 px-4 font-medium text-neutral-900 dark:text-neutral-100 cursor-pointer hover:underline hover:text-[#0071E3] dark:hover:text-[#64D2FF] transition-colors"
+                      className="py-2.5 px-4 font-medium text-neutral-900 dark:text-neutral-100 cursor-pointer hover:underline hover:text-[#0071E3] dark:hover:text-[#64D2FF] transition-colors border-r border-b border-neutral-200 dark:border-neutral-800"
                     >
                       <div className="flex items-center justify-between">
                         <span className="truncate flex items-center space-x-1">
@@ -309,16 +309,16 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                               ? `Chưa chấm bài ${prob.code} của ${row.contestantName}. Nhấn để xem file`
                               : `Chưa nộp bài ${prob.code}. Nhấn để nạp file mã nguồn hoặc chẩn đoán!`
                           }
-                          className="py-2.5 px-2 text-center font-mono text-[11px] cursor-pointer hover:bg-[#0071E3]/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+                          className="py-2.5 px-2 text-center font-mono text-[12px] cursor-pointer hover:bg-[#0071E3]/[0.06] dark:hover:bg-white/[0.06] transition-colors border-r border-b border-neutral-200 dark:border-neutral-800"
                         >
                           {isGraded && score !== undefined ? (
                             <span
-                              className={`inline-flex items-center justify-center min-w-[38px] px-2 py-0.5 rounded-full text-[11px] font-semibold transition-transform hover:scale-105 ${
+                              className={`font-semibold ${
                                 score === prob.points
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50'
+                                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                                   : score > 0
-                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/50'
-                                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/50'
+                                  ? 'text-blue-600 dark:text-blue-400 font-semibold'
+                                  : 'text-rose-500 dark:text-rose-400 font-medium'
                               }`}
                             >
                               {score.toFixed(1)}
@@ -331,7 +331,7 @@ export const ThemisScoreboardGrid: React.FC<ThemisScoreboardGridProps> = ({
                     })}
 
                     {/* Total Score */}
-                    <td className="py-2.5 px-4 text-right font-mono font-bold text-[13px] text-neutral-900 dark:text-white">
+                    <td className="py-2.5 px-4 text-right font-mono font-bold text-[13px] text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800">
                       {row.hasAnyGraded ? row.totalScore.toFixed(2) : ''}
                     </td>
                   </tr>

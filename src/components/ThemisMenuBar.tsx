@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  FolderOpen, Save, Play, Pause, Square, RotateCcw, 
+import {
+  FolderOpen, Save, Play, Pause, Square, RotateCcw,
   Settings, HelpCircle, FileText, FolderPlus, FolderArchive, Users, Upload,
   FileSpreadsheet, Filter, CheckSquare, Square as EmptySquare, Trash2
 } from 'lucide-react';
@@ -8,6 +8,8 @@ import {
 export interface ThemisMenuBarProps {
   contestTitle: string;
   isJudging: boolean;
+  isHUDOpen?: boolean;
+  onOpenJudgingHUD?: () => void;
   onNewContest: () => void;
   onOpenTaskFolder: () => void;
   onOpenZip: () => void;
@@ -40,6 +42,8 @@ export interface ThemisMenuBarProps {
 export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
   contestTitle: _contestTitle,
   isJudging,
+  isHUDOpen,
+  onOpenJudgingHUD,
   onNewContest,
   onOpenTaskFolder,
   onOpenZip,
@@ -92,10 +96,9 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
   };
 
   const menuBtnClass = (menuName: string) =>
-    `px-3 py-1 rounded-md text-[12px] font-medium transition-colors ${
-      openMenu === menuName
-        ? 'bg-black/[0.08] dark:bg-white/[0.12] text-neutral-900 dark:text-white'
-        : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
+    `px-3 py-1 rounded-md text-[12px] font-medium transition-colors ${openMenu === menuName
+      ? 'bg-black/[0.08] dark:bg-white/[0.12] text-neutral-900 dark:text-white'
+      : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
     }`;
 
   const dropdownClass =
@@ -217,15 +220,28 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
           {openMenu === 'judge' && (
             <div className={`${dropdownClass} w-64`}>
               <button
-                onClick={() => { onStartJudging(); setOpenMenu(null); }}
-                disabled={isJudging}
+                onClick={() => {
+                  if (isJudging) {
+                    onOpenJudgingHUD?.();
+                  } else {
+                    onStartJudging();
+                  }
+                  setOpenMenu(null);
+                }}
+                disabled={isJudging && isHUDOpen}
                 className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
-                  isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
+                  isJudging && isHUDOpen ? 'opacity-40 cursor-not-allowed' : itemHoverClass
                 }`}
               >
                 <span className="flex items-center space-x-2">
-                  <Play className="w-4 h-4 text-emerald-500 group-hover:text-white fill-emerald-500 group-hover:fill-white" />
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 group-hover:text-white">Bắt đầu chấm</span>
+                  {isJudging ? (
+                    <div className="w-4 h-4 border-2 border-blue-500/60 border-t-blue-500 rounded-full animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4 text-emerald-500 group-hover:text-white fill-emerald-500 group-hover:fill-white" />
+                  )}
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 group-hover:text-white">
+                    {isJudging ? (isHUDOpen ? 'Đang chấm bài...' : 'Xem tiến trình chấm') : 'Bắt đầu chấm'}
+                  </span>
                 </span>
                 <span className="text-[11px] opacity-60 font-mono">F9</span>
               </button>
@@ -233,9 +249,8 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
               <button
                 onClick={() => { onPauseJudging(); setOpenMenu(null); }}
                 disabled={!isJudging}
-                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
-                  !isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
-                }`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${!isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
+                  }`}
               >
                 <span className="flex items-center space-x-2">
                   <Pause className="w-4 h-4 text-amber-500 group-hover:text-white" />
@@ -247,9 +262,8 @@ export const ThemisMenuBar: React.FC<ThemisMenuBarProps> = ({
               <button
                 onClick={() => { onStopJudging(); setOpenMenu(null); }}
                 disabled={!isJudging}
-                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
-                  !isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
-                }`}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${!isJudging ? 'opacity-40 cursor-not-allowed' : itemHoverClass
+                  }`}
               >
                 <span className="flex items-center space-x-2">
                   <Square className="w-4 h-4 text-rose-500 group-hover:text-white" />
